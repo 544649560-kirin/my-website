@@ -196,17 +196,17 @@ const siteData = {
             { text: 'DeepSeek · 阶跃', status: false }
           ],
           detail: `
-            <p>本地个人 AI 工作台，把想法就地做成能跑的产品，常驻运行于本机。</p>
-            <h4>访问入口</h4>
-            <p>浏览器打开 <code>http://localhost:3088</code>（仅本机可访问，未做公网暴露）。</p>
-            <h4>文本生成</h4>
-            <p>接 DeepSeek API。账号下主备两把 Key <strong>余额共享</strong>：账号欠费时两把同时不可用，切换 Key 无效，需先充值再请求。</p>
-            <h4>图像生成</h4>
-            <p>当前用 pollinations 免费 API；正在评估切换为阶跃星辰（StepFun）。阶跃 Key 存放于 <code>~/.stepfun/api_key</code>，由 <code>server.js</code> 自动读取，<strong>勿</strong>另存进项目的 <code>.env</code>。</p>
-            <h4>启动与目录</h4>
-            <p>以你实际的项目仓库为准（启动命令与目录路径请按你的部署补在此处）。</p>
-            <h4>余额自查</h4>
-            <p><code>curl https://api.deepseek.com/user/balance -H "Authorization: Bearer 你的KEY"</code></p>
+            <p>本地个人 AI 工作台，把想法就地做成能跑的产品，常驻本机运行。</p>
+            <h4>它接的是什么</h4>
+            <p>文本生成接 <strong>DeepSeek</strong> API，图像生成评估接 <strong>阶跃星辰（StepFun）</strong>；底座是一套工作流 AI 工具（类 WorkBuddy / DeepSeek Harness），把对话、出图、写代码串成一条流水线。</p>
+            <h4>了解更多</h4>
+            <p>
+              <a href="https://platform.deepseek.com" target="_blank" rel="noopener">DeepSeek 开放平台 ↗</a><br>
+              <a href="https://platform.stepfun.com" target="_blank" rel="noopener">阶跃星辰 StepFun ↗</a><br>
+              <a href="https://www.workbuddy.cn" target="_blank" rel="noopener">WorkBuddy ↗</a>
+            </p>
+            <h4>一点提示</h4>
+            <p>DeepSeek 账号下两把 Key <strong>余额共享</strong>，欠费时切换无效，需先充值；阶跃 Key 放在 <code>~/.stepfun/api_key</code>，由服务端自动读取。</p>
           `
         },
         {
@@ -221,15 +221,18 @@ const siteData = {
             { text: 'DB · 在线表单', status: false }
           ],
           detail: `
-            <p>数据采集系统，提供 <strong>DB + 在线表单</strong> 双能力，从采集到落库一条线。</p>
-            <h4>当前状态</h4>
-            <p>建设中。技术栈、启动方式与目录路径以你的实际仓库为准（此段待你补充）。</p>
-            <h4>设计目标</h4>
+            <p>数据采集系统，提供 <strong>DB + 在线表单</strong> 双能力，目标是把「人填 → 库存」这一步自动化，去掉人工搬运。</p>
+            <h4>实现路径（概念层，不绑平台）</h4>
             <ul>
-              <li>在线表单采集：浏览器填写，数据直接进入数据库；</li>
-              <li>DB 落库：结构化存储，支持后续查询与导出；</li>
-              <li>一条线打通：采集 → 校验 → 落库，不依赖人工搬运。</li>
+              <li><strong>① 表单层</strong>：在线表单采集，浏览器填写即提交，无需本地安装；</li>
+              <li><strong>② 校验层</strong>：提交时做格式与必填校验，脏数据挡在入库前；</li>
+              <li><strong>③ 落库层</strong>：结构化写入数据库，自动建表或追加，字段可配置；</li>
+              <li><strong>④ 查询导出</strong>：按条件检索、导出，供后续分析复用。</li>
             </ul>
+            <h4>怎么落地</h4>
+            <p>不必绑死某个平台——任何「带数据库能力的表单工作流」都能搭：可用 <a href="https://www.workbuddy.cn" target="_blank" rel="noopener">WorkBuddy</a> 的采集类技能快速起一个，也可自建前端表单 + 轻量数据库（如 SQLite / Postgres）。核心是把采集到落库做成一条线，而不是每次手动拷表。</p>
+            <h4>当前状态</h4>
+            <p>建设中——架构与目标已清晰，正逐步把各层打通。</p>
           `
         },
       ]

@@ -142,24 +142,26 @@ const siteData = {
       items: [
         {
           index: '壹',
-          seal: '庄',
-          name: '读庄子安人生',
-          desc: '以庄子回应现代人的精神内耗，谈空船之喻与心物关系。公众号长期连载。',
+          seal: '评',
+          name: '评论 + 散文',
+          desc: '评论与散文，兼及房地产与存量时代观察，把所思所想写成普通人读得懂的文字。',
           bgImage: 'art-cover-song.png',
+          url: 'https://mp.weixin.qq.com/s/jQJdKdAAeA9Kok5NXCFXrQ', // 微信公众号文章
           meta: [
             { text: '连载中', status: true },
-            { text: '微信公众号', status: false }
+            { text: '评论 · 散文 · 地产', status: false }
           ]
         },
         {
           index: '贰',
-          seal: '存',
-          name: 'kirin · 存量时代',
-          desc: '房地产与时代观察，把宏大的存量叙事写成普通人读得懂的文字。',
+          seal: '智',
+          name: 'AI coding & 具身智能',
+          desc: '聚焦 AI 编程与具身智能，追踪前沿产品与资讯，做业余而认真的观察。',
           bgImage: 'art-landscape.jpg',
+          url: 'https://mp.weixin.qq.com/s/47JnFTONtBLJvMOenw-vEg', // 微信公众号文章
           meta: [
             { text: '连载中', status: true },
-            { text: '房地产观察', status: false }
+            { text: 'AI 观察', status: false }
           ]
         },
         {
@@ -168,6 +170,7 @@ const siteData = {
           name: '读书笔记',
           desc: '第一人称读葛兆光《中国思想史》、布迪厄《区隔》等，把古典与理论接到当下。',
           bgImage: 'art-song-tea.jpg',
+          url: 'https://mp.weixin.qq.com/s/8XhWFFKxfSDsIKlqW69s1Q', // 微信公众号文章
           meta: [
             { text: '不定期', status: false },
             { text: '思想史 · 社会学', status: false }
@@ -187,10 +190,24 @@ const siteData = {
           name: 'MVP Workbench',
           desc: '本地 AI 工作台：文本生成接 DeepSeek，图像生成接阶跃星辰，把想法就地做成能跑的东西。',
           bgImage: 'art-landscape.jpg',
+          url: '', // 填项目仓库/演示链接，留空则卡片不可点击
           meta: [
             { text: '运行中', status: true },
             { text: 'DeepSeek · 阶跃', status: false }
-          ]
+          ],
+          detail: `
+            <p>本地个人 AI 工作台，把想法就地做成能跑的产品，常驻运行于本机。</p>
+            <h4>访问入口</h4>
+            <p>浏览器打开 <code>http://localhost:3088</code>（仅本机可访问，未做公网暴露）。</p>
+            <h4>文本生成</h4>
+            <p>接 DeepSeek API。账号下主备两把 Key <strong>余额共享</strong>：账号欠费时两把同时不可用，切换 Key 无效，需先充值再请求。</p>
+            <h4>图像生成</h4>
+            <p>当前用 pollinations 免费 API；正在评估切换为阶跃星辰（StepFun）。阶跃 Key 存放于 <code>~/.stepfun/api_key</code>，由 <code>server.js</code> 自动读取，<strong>勿</strong>另存进项目的 <code>.env</code>。</p>
+            <h4>启动与目录</h4>
+            <p>以你实际的项目仓库为准（启动命令与目录路径请按你的部署补在此处）。</p>
+            <h4>余额自查</h4>
+            <p><code>curl https://api.deepseek.com/user/balance -H "Authorization: Bearer 你的KEY"</code></p>
+          `
         },
         {
           index: '贰',
@@ -198,22 +215,23 @@ const siteData = {
           name: 'dp-collect',
           desc: '数据采集系统，DB + 在线表单双能力，从采集到落库一条线。',
           bgImage: 'art-song-tea.jpg',
+          url: '', // 填项目仓库/演示链接，留空则卡片不可点击
           meta: [
             { text: '建设中', status: true },
             { text: 'DB · 在线表单', status: false }
-          ]
+          ],
+          detail: `
+            <p>数据采集系统，提供 <strong>DB + 在线表单</strong> 双能力，从采集到落库一条线。</p>
+            <h4>当前状态</h4>
+            <p>建设中。技术栈、启动方式与目录路径以你的实际仓库为准（此段待你补充）。</p>
+            <h4>设计目标</h4>
+            <ul>
+              <li>在线表单采集：浏览器填写，数据直接进入数据库；</li>
+              <li>DB 落库：结构化存储，支持后续查询与导出；</li>
+              <li>一条线打通：采集 → 校验 → 落库，不依赖人工搬运。</li>
+            </ul>
+          `
         },
-        {
-          index: '叁',
-          seal: '訊',
-          name: 'AI 资讯流水线',
-          desc: '每日自动化产出聚焦 AI 编程与具身智能的资讯摘要，无人值守运行。',
-          bgImage: 'art-chrysanthemum.jpg',
-          meta: [
-            { text: '每日运行', status: true },
-            { text: '自动化 · AI', status: false }
-          ]
-        }
       ]
     }
   },

@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="data.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -694,6 +695,30 @@
     z-index: 1;
   }
 
+  .tool-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 14px 0 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .tool-meta span {
+    font-size: 11px;
+    color: var(--ink-mute);
+    font-family: 'Noto Serif SC', serif;
+    letter-spacing: 0.04em;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 11px;
+  }
+
+  .tool-meta span.status {
+    color: var(--celadon);
+    border-color: rgba(74, 124, 89, 0.3);
+  }
+
   .tool-index {
     position: absolute;
     top: 16px;
@@ -709,6 +734,40 @@
   /* ===== Gallery 作品画廊 ===== */
   .gallery {
     background: linear-gradient(180deg, transparent, rgba(176, 137, 104, 0.03), transparent);
+  }
+
+  /* 作品子栏目标题 */
+  .works-subhead {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin: 48px 0 22px;
+    position: relative;
+    padding-left: 14px;
+  }
+  .works-subhead::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 18px;
+    background: var(--celadon);
+    border-radius: 2px;
+  }
+  .works-subhead-cn {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    color: var(--ink);
+  }
+  .works-subhead-en {
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
   }
 
   .gallery-grid {
@@ -1276,86 +1335,8 @@
       <p class="section-subtitle">以宋韵为骨，以科技为笔</p>
     </div>
 
-    <!-- 精选视频作品 -->
-    <div class="featured-video-section reveal">
-      <div class="featured-video">
-        <div class="video-container">
-          <video class="work-video" playsinline loop muted>
-            <source src="kirin-coffee.mp4" type="video/mp4">
-            你的浏览器不支持视频播放
-          </video>
-          <div class="video-play-overlay">
-            <div class="video-play-btn">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5v14l11-7z"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-        <div class="featured-info">
-          <div class="badge">精 选 作 品</div>
-          <h3>Kirin · 桂花拿铁</h3>
-          <p>AI 生成的创意咖啡短片，一杯桂花拿铁的治愈时光。探索味觉与视觉的碰撞，让咖啡也能有诗意的表达。</p>
-          <div class="featured-meta">
-            <span>时长 · 约 10 秒</span>
-            <span>工具 · AI 视频生成</span>
-            <span>主题 · 咖啡</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 绘画作品画廊 -->
-    <div class="gallery-grid">
-      <div class="gallery-item reveal">
-        <img src="art-cover-song.png" alt="宋韵封面">
-        <div class="gallery-overlay">
-            <span class="gallery-tag">AI 绘画</span>
-            <h3>宋韵山水</h3>
-            <p>宋代美学山水长卷风格</p>
-          </div>
-        </div>
-      <div class="gallery-item reveal">
-        <img src="art-plum-crane.jpg" alt="梅鹤图">
-        <div class="gallery-overlay">
-          <span class="gallery-tag">AI 绘画</span>
-          <h3>梅鹤清韵</h3>
-          <p>梅妻鹤子，清雅脱俗</p>
-        </div>
-      </div>
-      <div class="gallery-item reveal">
-        <img src="art-song-tea.jpg" alt="宋代茶事">
-        <div class="gallery-overlay">
-          <span class="gallery-tag">AI 绘画</span>
-          <h3>宋茶雅集</h3>
-          <p>宋人点茶，一盏清欢</p>
-        </div>
-      </div>
-      <div class="gallery-item reveal">
-        <img src="art-chrysanthemum.jpg" alt="菊花">
-        <div class="gallery-overlay">
-          <span class="gallery-tag">AI 绘画</span>
-          <h3>秋菊傲霜</h3>
-          <p>采菊东篱下，悠然见南山</p>
-        </div>
-      </div>
-      <div class="gallery-item reveal">
-        <img src="art-qingming.jpg" alt="清明上河图">
-        <div class="gallery-overlay">
-          <span class="gallery-tag">AI 绘画</span>
-          <h3>清明风物</h3>
-          <p>市井烟火，盛世繁华</p>
-        </div>
-      </div>
-      <div class="gallery-item reveal">
-        <img src="art-landscape.jpg" alt="山水">
-        <div class="gallery-overlay">
-          <span class="gallery-tag">AI 绘画</span>
-          <h3>远山有意</h3>
-          <p>山高水长，意境悠远</p>
-        </div>
-      </div>
-    </div>
+    <!-- 作品内容（由 data.js 动态渲染） -->
+    <div class="works-content"></div>
   </div>
 </section>
 
@@ -1435,6 +1416,247 @@
 </footer>
 
 <script>
+  // ====== 从 data.js 渲染页面内容 ======
+  function renderSite() {
+    const d = siteData;
+
+    // --- 标题 ---
+    document.title = d.info.name + ' · ' + d.info.nameEn;
+
+    // --- Hero ---
+    const heroBg = document.querySelector('.hero-bg');
+    if (heroBg) heroBg.style.backgroundImage = `url('${d.info.heroBgImage}')`;
+
+    const heroVTitle = document.querySelector('.hero-vertical-title');
+    if (heroVTitle) heroVTitle.textContent = d.info.verticalSlogan;
+
+    const heroName = document.querySelector('.hero h1 .char');
+    if (heroName) heroName.textContent = d.info.name;
+
+    const heroSubtitle = document.querySelector('.hero-subtitle');
+    if (heroSubtitle) heroSubtitle.textContent = d.info.title;
+
+    const heroDesc = document.querySelector('.hero-desc');
+    if (heroDesc) heroDesc.innerHTML = d.info.description.replace(/\n/g, '<br>');
+
+    const heroQuote = document.querySelector('.hero-quote');
+    if (heroQuote) heroQuote.innerHTML = d.info.quote.replace(/\n/g, '<br>');
+
+    const heroImg = document.querySelector('.hero-scroll-painting img');
+    if (heroImg) heroImg.src = d.info.heroImage;
+
+    // --- 关于我 ---
+    // 板块大标题
+    const aboutSectionTitle = document.querySelector('.about .section-title');
+    if (aboutSectionTitle && d.about.title) aboutSectionTitle.textContent = d.about.title;
+
+    const aboutSectionSub = document.querySelector('.about .section-subtitle');
+    if (aboutSectionSub && d.about.subtitle) aboutSectionSub.textContent = d.about.subtitle;
+
+    // 正文大标题
+    const aboutHeading = document.querySelector('.about-text h2');
+    if (aboutHeading && d.about.heading) {
+      aboutHeading.innerHTML = d.about.heading;
+    }
+
+    // 段落
+    const aboutPs = document.querySelectorAll('.about-text p');
+    if (aboutPs.length && d.about.paragraphs) {
+      d.about.paragraphs.forEach((text, i) => {
+        if (aboutPs[i]) aboutPs[i].textContent = text;
+      });
+    }
+
+    const aboutImg = document.querySelector('.about-painting img');
+    if (aboutImg) aboutImg.src = d.about.sideImage;
+
+    const aboutImgTitle = document.querySelector('.about-painting-caption h4');
+    if (aboutImgTitle) aboutImgTitle.textContent = d.about.sideImageTitle;
+
+    const aboutImgSub = document.querySelector('.about-painting-caption p');
+    if (aboutImgSub) aboutImgSub.textContent = d.about.sideImageSubtitle;
+
+    // 统计数据
+    const stats = document.querySelectorAll('.stat');
+    if (stats.length && d.about.stats) {
+      d.about.stats.forEach((s, i) => {
+        if (stats[i]) {
+          stats[i].querySelector('.stat-number').textContent = s.number;
+          stats[i].querySelector('.stat-label').textContent = s.label;
+        }
+      });
+    }
+
+    // --- 工具卡片 ---
+    const toolGrid = document.querySelector('.tool-grid');
+    if (toolGrid && d.tools) {
+      toolGrid.innerHTML = d.tools.map(t => `
+        <div class="tool-card reveal" style="--tool-bg: url('${t.bgImage}');">
+          <span class="tool-index">${t.index}</span>
+          <div class="tool-seal">${t.seal}</div>
+          <h3>${t.name}</h3>
+          <p>${t.desc}</p>
+        </div>
+      `).join('');
+    }
+
+    // --- 作品区（多分类） ---
+    const worksContent = document.querySelector('.works-content');
+    if (worksContent && d.works) {
+      const w = d.works;
+      let html = '';
+
+      // 1. 影像分类 + 精选视频
+      if (w.video && w.video.featured) {
+        const v = w.video;
+        const f = v.featured;
+        html += `
+          <h3 class="works-subhead reveal"><span class="works-subhead-cn">${v.title}</span><span class="works-subhead-en">${v.titleEn}</span></h3>
+          <div class="featured-video-section reveal">
+            <div class="featured-video">
+              <div class="video-container">
+                <video class="work-video" playsinline loop muted poster="${f.poster}">
+                  <source src="${f.videoUrl}" type="video/mp4">
+                  你的浏览器不支持视频播放
+                </video>
+                <div class="video-play-overlay">
+                  <div class="video-play-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div class="featured-info">
+                <div class="badge">${f.badge}</div>
+                <h3>${f.title}</h3>
+                <p>${f.desc}</p>
+                <div class="featured-meta">
+                  ${f.meta.map(m => `<span>${m.text}</span>`).join('')}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 2. 绘画分类 + 画廊网格
+      if (w.painting && w.painting.items && w.painting.items.length) {
+        const p = w.painting;
+        html += `
+          <h3 class="works-subhead reveal"><span class="works-subhead-cn">${p.title}</span><span class="works-subhead-en">${p.titleEn}</span></h3>
+          <div class="gallery-grid">
+            ${p.items.map(item => `
+              <div class="gallery-item reveal">
+                <img src="${item.image}" alt="${item.title}">
+                <div class="gallery-overlay">
+                  <span class="gallery-tag">${item.tag}</span>
+                  <h3>${item.title}</h3>
+                  <p>${item.desc}</p>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      // 3. 写作分类（卡片形式）
+      if (w.writing && w.writing.items && w.writing.items.length) {
+        const wr = w.writing;
+        html += `
+          <h3 class="works-subhead reveal"><span class="works-subhead-cn">${wr.title}</span><span class="works-subhead-en">${wr.titleEn}</span></h3>
+          <div class="tool-grid">
+            ${wr.items.map(item => `
+              <div class="tool-card reveal" style="--tool-bg: url('${item.bgImage}');">
+                <span class="tool-index">${item.index}</span>
+                <div class="tool-seal">${item.seal}</div>
+                <h3>${item.name}</h3>
+                <p>${item.desc}</p>
+                <div class="tool-meta">
+                  ${item.meta.map(m => `<span class="${m.status ? 'status' : ''}">${m.text}</span>`).join('')}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      // 4. 项目分类（卡片形式）
+      if (w.projects && w.projects.items && w.projects.items.length) {
+        const pr = w.projects;
+        html += `
+          <h3 class="works-subhead reveal"><span class="works-subhead-cn">${pr.title}</span><span class="works-subhead-en">${pr.titleEn}</span></h3>
+          <div class="tool-grid">
+            ${pr.items.map(item => `
+              <div class="tool-card reveal" style="--tool-bg: url('${item.bgImage}');">
+                <span class="tool-index">${item.index}</span>
+                <div class="tool-seal">${item.seal}</div>
+                <h3>${item.name}</h3>
+                <p>${item.desc}</p>
+                <div class="tool-meta">
+                  ${item.meta.map(m => `<span class="${m.status ? 'status' : ''}">${m.text}</span>`).join('')}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      worksContent.innerHTML = html;
+    }
+
+    // --- 技能标签 ---
+    const skillsWrap = document.querySelector('.skills-wrap');
+    if (skillsWrap && d.skills) {
+      skillsWrap.innerHTML = d.skills.map(s => `
+        <div class="skill-group">
+          <h3 class="skill-group-title"><span class="dot"></span>${s.category}</h3>
+          <div class="skill-tags">
+            ${s.items.map(item => `<span class="skill-tag">${item}</span>`).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // --- 联系方式 ---
+    const contactCard = document.querySelector('.contact-card');
+    if (contactCard && d.contact) {
+      const c = d.contact;
+      const linkIcons = {
+        email: '<svg viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>',
+        github: '<svg viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>',
+        wechat: '<svg viewBox="0 0 24 24"><path d="M9.5 11a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/><path d="M14.5 11a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/><path d="M21.6 14.7a5.5 5.5 0 0 0-5.3-3.2c-2.2 0-4.1 1.1-5.3 2.8-.4-.1-.8-.2-1.2-.2-3 0-5.5 2-5.5 4.5s2.5 4.5 5.5 4.5c.4 0 .8 0 1.2-.1.4.5 1 1 1.8 1.3.4.2.8.3 1.3.3 1 0 1.9-.3 2.7-.9l1.6.9-.4-1.8c1-.9 1.6-2.1 1.6-3.4 0-1.6-.7-3.1-1.7-4.1z"/></svg>'
+      };
+      contactCard.innerHTML = `
+        <div class="contact-seal">麒</div>
+        <h2>${c.title}</h2>
+        <p>${c.desc}</p>
+        <div class="contact-links">
+          ${c.links.map(l => `
+            <a href="${l.url}" class="contact-link" ${l.url.startsWith('http') ? 'target="_blank"' : ''}>
+              ${linkIcons[l.type] || ''}
+              <span>${l.label}</span>
+            </a>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    // --- 页脚 ---
+    const footerP = document.querySelector('footer p');
+    if (footerP && d.footer) footerP.textContent = d.footer.text;
+
+    // 重新触发滚动动画检查
+    checkReveal();
+  }
+
+  // 页面加载后渲染
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderSite);
+  } else {
+    renderSite();
+  }
+
   // 滚动显示动画
   const reveals = document.querySelectorAll('.reveal');
 
@@ -1442,7 +1664,7 @@
     const windowHeight = window.innerHeight;
     const revealPoint = 100;
 
-    reveals.forEach((element, index) => {
+    document.querySelectorAll('.reveal').forEach((element, index) => {
       const revealTop = element.getBoundingClientRect().top;
       if (revealTop < windowHeight - revealPoint) {
         setTimeout(() => {
@@ -1483,35 +1705,27 @@
   });
 
   // 视频播放交互
-  const videoContainer = document.querySelector('.video-container');
-  const video = document.querySelector('.work-video');
-  
-  if (videoContainer && video) {
-    videoContainer.addEventListener('click', function() {
-      if (video.paused) {
-        video.play();
-        video.muted = false;
-        videoContainer.classList.add('playing');
-      } else {
-        video.pause();
-        videoContainer.classList.remove('playing');
-      }
-    });
-
-    video.addEventListener('ended', function() {
-      videoContainer.classList.remove('playing');
-    });
-  }
-
-  // 工具卡片背景
-  const toolCards = document.querySelectorAll('.tool-card');
-  toolCards.forEach(card => {
-    const bg = getComputedStyle(card).getPropertyValue('--tool-bg');
-    if (bg) {
-      card.style.setProperty('--card-bg-img', bg);
-      const before = card.querySelector('::before');
+  document.addEventListener('click', function(e) {
+    const vc = e.target.closest('.video-container');
+    if (!vc) return;
+    const video = vc.querySelector('.work-video');
+    if (!video) return;
+    if (video.paused) {
+      video.play();
+      video.muted = false;
+      vc.classList.add('playing');
+    } else {
+      video.pause();
+      vc.classList.remove('playing');
     }
   });
+
+  document.addEventListener('ended', function(e) {
+    if (e.target.classList.contains('work-video')) {
+      const vc = e.target.closest('.video-container');
+      if (vc) vc.classList.remove('playing');
+    }
+  }, true);
 </script>
 
 </body>

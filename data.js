@@ -158,7 +158,7 @@ const siteData = {
           name: 'AI coding & 具身智能',
           desc: '聚焦 AI 编程与具身智能，追踪前沿产品与资讯，做业余而认真的观察。',
           bgImage: 'art-landscape.jpg',
-          url: 'https://mp.weixin.qq.com/s/47JnFTONtBLJvMOenw-vEg', // 微信公众号文章
+          url: 'https://mp.weixin.qq.com/s/9CAZnEs4X35bStiBhzcA3w', // 微信公众号文章
           meta: [
             { text: '连载中', status: true },
             { text: 'AI 观察', status: false }

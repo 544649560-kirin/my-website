@@ -8,7 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="data.js?v=2"></script>
+<!-- 内容文件 data.js：每次请求带时间戳，强制取最新，避免 GitHub CDN / 浏览器缓存导致更新不实时 -->
+<script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -657,6 +658,115 @@
     box-shadow: var(--shadow-card);
     border-color: var(--celadon);
   }
+  a.tool-card { text-decoration: none; color: inherit; cursor: pointer; }
+  .tool-card .tool-go {
+    position: absolute;
+    top: 16px;
+    right: 18px;
+    font-size: 15px;
+    opacity: .45;
+    transition: opacity .25s, transform .25s;
+  }
+  a.tool-card:hover .tool-go { opacity: .9; transform: translate(2px, -2px); }
+  .tool-card.has-detail { cursor: pointer; }
+  .tool-card .tool-more {
+    display: inline-block;
+    margin-top: 12px;
+    font-size: 12.5px;
+    letter-spacing: .05em;
+    color: var(--celadon);
+    opacity: .7;
+    transition: opacity .25s;
+    position: relative;
+    z-index: 1;
+  }
+  .tool-card.has-detail:hover .tool-more { opacity: 1; }
+
+  /* ===== 卡片详情弹窗 ===== */
+  .card-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(28, 27, 24, .55);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .25s ease, visibility .25s ease;
+    z-index: 9999;
+  }
+  .card-modal-overlay.open { opacity: 1; visibility: visible; }
+  .card-modal {
+    background: #fffdf8;
+    max-width: 640px;
+    width: 100%;
+    max-height: 84vh;
+    overflow-y: auto;
+    border-radius: 14px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .25);
+    padding: 36px 38px;
+    position: relative;
+    transform: translateY(12px);
+    transition: transform .25s ease;
+  }
+  .card-modal-overlay.open .card-modal { transform: translateY(0); }
+  .card-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    width: 34px;
+    height: 34px;
+    border: none;
+    background: transparent;
+    font-size: 24px;
+    line-height: 1;
+    color: #9a958c;
+    cursor: pointer;
+    transition: color .2s;
+  }
+  .card-modal-close:hover { color: var(--celadon); }
+  .card-modal-seal {
+    width: 46px;
+    height: 46px;
+    border-radius: 7px;
+    background: rgba(74, 124, 89, .1);
+    border: 1px solid rgba(74, 124, 89, .15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Noto Serif SC', serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--celadon);
+    margin-bottom: 14px;
+  }
+  .card-modal h2 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 22px;
+    margin-bottom: 18px;
+    color: var(--ink);
+  }
+  .card-modal .cm-body { font-size: 14px; line-height: 1.85; color: var(--ink-soft); }
+  .card-modal .cm-body h4 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 15px;
+    color: var(--ink);
+    margin: 20px 0 8px;
+  }
+  .card-modal .cm-body p { margin: 6px 0; }
+  .card-modal .cm-body ul { margin: 6px 0; padding-left: 18px; }
+  .card-modal .cm-body li { margin: 4px 0; }
+  .card-modal .cm-body code {
+    background: rgba(74, 124, 89, .1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12.5px;
+    color: #3f6b4a;
+  }
 
   .tool-seal {
     width: 42px;
@@ -1145,10 +1255,51 @@
     font-family: 'Noto Serif SC', serif;
   }
 
+  /* 汉堡菜单按钮：默认隐藏，仅移动端显示 */
+  .nav-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+  }
+  .nav-toggle span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--ink, #1c1b18);
+    border-radius: 2px;
+    transition: transform .3s, opacity .3s;
+  }
+  .nav-toggle.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .nav-toggle.active span:nth-child(2) { opacity: 0; }
+  .nav-toggle.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
   /* ===== 响应式 ===== */
   @media (max-width: 900px) {
     nav { padding: 14px 24px; }
-    .nav-links { display: none; }
+    .nav-links {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      flex-direction: column;
+      background: rgba(250, 248, 243, 0.98);
+      backdrop-filter: blur(8px);
+      padding: 12px 24px 18px;
+      gap: 4px;
+      box-shadow: 0 12px 30px rgba(28, 27, 24, 0.1);
+      display: none;
+    }
+    .nav-links.open { display: flex; }
+    .nav-links li { width: 100%; }
+    .nav-links a { display: block; padding: 10px 0; }
+    .nav-toggle { display: flex; }
     .hero { padding: 100px 24px 60px; }
     .hero-content {
       grid-template-columns: 1fr;
@@ -1202,8 +1353,12 @@
     <li><a href="#about">关于</a></li>
     <li><a href="#tools">工具</a></li>
     <li><a href="#gallery">作品</a></li>
+    <li><a href="#skills">技能</a></li>
     <li><a href="#contact">联系</a></li>
   </ul>
+  <button class="nav-toggle" aria-label="菜单" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
 
 <!-- Hero 区域 -->
@@ -1560,23 +1715,35 @@
         `;
       }
 
+      // 工具卡渲染（支持外链：item.url 存在则渲染为 <a> 新窗口打开）
+      window.__cardDetails = window.__cardDetails || {};
+      const toolCardHTML = (item, key) => {
+        const isLink = !!(item.url && String(item.url).trim());
+        const hasDetail = !!(item.detail && String(item.detail).trim());
+        const style = `--tool-bg: url('${item.bgImage}');`;
+        if (hasDetail) window.__cardDetails[key] = { title: item.name, seal: item.seal, html: item.detail };
+        const inner = `
+          <span class="tool-index">${item.index}</span>
+          <div class="tool-seal">${item.seal}</div>
+          <h3>${item.name}${isLink ? '<span class="tool-go">↗</span>' : ''}</h3>
+          <p>${item.desc}</p>
+          <div class="tool-meta">
+            ${item.meta.map(m => `<span class="${m.status ? 'status' : ''}">${m.text}</span>`).join('')}
+          </div>
+          ${hasDetail ? '<span class="tool-more">查看详情 ›</span>' : ''}`;
+
+        if (hasDetail) return `<div class="tool-card reveal has-detail" data-detail-key="${key}" style="${style}">${inner}</div>`;
+        if (isLink) return `<a class="tool-card reveal" href="${item.url}" target="_blank" rel="noopener" style="${style}">${inner}</a>`;
+        return `<div class="tool-card reveal" style="${style}">${inner}</div>`;
+      };
+
       // 3. 写作分类（卡片形式）
       if (w.writing && w.writing.items && w.writing.items.length) {
         const wr = w.writing;
         html += `
           <h3 class="works-subhead reveal"><span class="works-subhead-cn">${wr.title}</span><span class="works-subhead-en">${wr.titleEn}</span></h3>
           <div class="tool-grid">
-            ${wr.items.map(item => `
-              <div class="tool-card reveal" style="--tool-bg: url('${item.bgImage}');">
-                <span class="tool-index">${item.index}</span>
-                <div class="tool-seal">${item.seal}</div>
-                <h3>${item.name}</h3>
-                <p>${item.desc}</p>
-                <div class="tool-meta">
-                  ${item.meta.map(m => `<span class="${m.status ? 'status' : ''}">${m.text}</span>`).join('')}
-                </div>
-              </div>
-            `).join('')}
+            ${wr.items.map((item, i) => toolCardHTML(item, 'w' + i)).join('')}
           </div>
         `;
       }
@@ -1587,17 +1754,7 @@
         html += `
           <h3 class="works-subhead reveal"><span class="works-subhead-cn">${pr.title}</span><span class="works-subhead-en">${pr.titleEn}</span></h3>
           <div class="tool-grid">
-            ${pr.items.map(item => `
-              <div class="tool-card reveal" style="--tool-bg: url('${item.bgImage}');">
-                <span class="tool-index">${item.index}</span>
-                <div class="tool-seal">${item.seal}</div>
-                <h3>${item.name}</h3>
-                <p>${item.desc}</p>
-                <div class="tool-meta">
-                  ${item.meta.map(m => `<span class="${m.status ? 'status' : ''}">${m.text}</span>`).join('')}
-                </div>
-              </div>
-            `).join('')}
+            ${pr.items.map((item, i) => toolCardHTML(item, 'p' + i)).join('')}
           </div>
         `;
       }
@@ -1704,6 +1861,24 @@
     });
   });
 
+  // 移动端导航开关
+  const navToggle = document.querySelector('.nav-toggle');
+  const navLinks = document.querySelector('.nav-links');
+  if (navToggle && navLinks) {
+    navToggle.addEventListener('click', () => {
+      const open = navLinks.classList.toggle('open');
+      navToggle.classList.toggle('active', open);
+      navToggle.setAttribute('aria-expanded', String(open));
+    });
+    navLinks.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', () => {
+        navLinks.classList.remove('open');
+        navToggle.classList.remove('active');
+        navToggle.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
+
   // 视频播放交互
   document.addEventListener('click', function(e) {
     const vc = e.target.closest('.video-container');
@@ -1726,7 +1901,41 @@
       if (vc) vc.classList.remove('playing');
     }
   }, true);
+  // 工具卡详情弹窗
+  const cardModalOverlay = document.getElementById('cardModalOverlay');
+  const cardModalClose = document.getElementById('cardModalClose');
+  function openCardModal(key) {
+    const d = window.__cardDetails && window.__cardDetails[key];
+    if (!d || !cardModalOverlay) return;
+    document.getElementById('cardModalSeal').textContent = d.seal || '麒';
+    document.getElementById('cardModalTitle').textContent = d.title || '';
+    document.getElementById('cardModalBody').innerHTML = d.html || '';
+    cardModalOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeCardModal() {
+    if (!cardModalOverlay) return;
+    cardModalOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', function (e) {
+    const card = e.target.closest('.tool-card.has-detail');
+    if (card) { openCardModal(card.getAttribute('data-detail-key')); return; }
+    if (cardModalOverlay && cardModalOverlay.classList.contains('open')) {
+      if (e.target === cardModalOverlay || e.target.id === 'cardModalClose') closeCardModal();
+    }
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeCardModal(); });
 </script>
+
+<div class="card-modal-overlay" id="cardModalOverlay">
+  <div class="card-modal" role="dialog" aria-modal="true">
+    <button class="card-modal-close" id="cardModalClose" aria-label="关闭">×</button>
+    <div class="card-modal-seal" id="cardModalSeal">麒</div>
+    <h2 id="cardModalTitle"></h2>
+    <div class="cm-body" id="cardModalBody"></div>
+  </div>
+</div>
 
 </body>
 </html>

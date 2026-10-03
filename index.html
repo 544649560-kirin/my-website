@@ -1901,28 +1901,33 @@
       if (vc) vc.classList.remove('playing');
     }
   }, true);
-  // 工具卡详情弹窗
-  const cardModalOverlay = document.getElementById('cardModalOverlay');
-  const cardModalClose = document.getElementById('cardModalClose');
+  // 工具卡详情弹窗（弹窗 DOM 位于本脚本之后，故运行时获取，避免取到 null）
+  const getOverlay = () => document.getElementById('cardModalOverlay');
   function openCardModal(key) {
+    const ov = getOverlay();
     const d = window.__cardDetails && window.__cardDetails[key];
-    if (!d || !cardModalOverlay) return;
-    document.getElementById('cardModalSeal').textContent = d.seal || '麒';
-    document.getElementById('cardModalTitle').textContent = d.title || '';
-    document.getElementById('cardModalBody').innerHTML = d.html || '';
-    cardModalOverlay.classList.add('open');
+    if (!d || !ov) return;
+    const sealEl = document.getElementById('cardModalSeal');
+    const titleEl = document.getElementById('cardModalTitle');
+    const bodyEl = document.getElementById('cardModalBody');
+    if (sealEl) sealEl.textContent = d.seal || '麒';
+    if (titleEl) titleEl.textContent = d.title || '';
+    if (bodyEl) bodyEl.innerHTML = d.html || '';
+    ov.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
   function closeCardModal() {
-    if (!cardModalOverlay) return;
-    cardModalOverlay.classList.remove('open');
+    const ov = getOverlay();
+    if (!ov) return;
+    ov.classList.remove('open');
     document.body.style.overflow = '';
   }
   document.addEventListener('click', function (e) {
-    const card = e.target.closest('.tool-card.has-detail');
+    const card = e.target.closest && e.target.closest('.tool-card.has-detail');
     if (card) { openCardModal(card.getAttribute('data-detail-key')); return; }
-    if (cardModalOverlay && cardModalOverlay.classList.contains('open')) {
-      if (e.target === cardModalOverlay || e.target.id === 'cardModalClose') closeCardModal();
+    const ov = getOverlay();
+    if (ov && ov.classList.contains('open')) {
+      if (e.target === ov || e.target.id === 'cardModalClose') closeCardModal();
     }
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeCardModal(); });

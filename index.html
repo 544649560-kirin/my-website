@@ -4,41 +4,45 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kirin · AI 探索者</title>
+<title>麒麟 · Kirin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   :root {
-    --bg: #05050a;
-    --bg-soft: #0d0d1a;
-    --bg-card: rgba(20, 20, 40, 0.6);
-    --text: #f0f0ff;
-    --text-soft: #8b8ba7;
-    --text-mute: #5a5a7a;
-    --accent: #00d4ff;
-    --accent-2: #a855f7;
-    --accent-3: #ec4899;
-    --accent-glow: rgba(0, 212, 255, 0.4);
-    --border: rgba(0, 212, 255, 0.12);
-    --border-soft: rgba(255, 255, 255, 0.06);
+    /* 宋代美学配色 */
+    --paper: #f5f1e8;          /* 宣纸色 */
+    --paper-deep: #ebe5d7;     /* 深宣纸色 */
+    --ink: #1c1b18;            /* 墨色 */
+    --ink-soft: #5a5750;       /* 淡墨 */
+    --ink-mute: #9a958a;       /* 极淡墨 */
+    --celadon: #4a7c59;        /* 青瓷色 */
+    --celadon-light: #7ba086;  /* 淡青瓷 */
+    --ochre: #b08968;          /* 赭石色 */
+    --gold: #c9a227;           /* 描金色 */
+    --jade: #2d6a4f;           /* 玉色 */
+    --card: rgba(255, 253, 248, 0.7);
+    --border: rgba(28, 27, 24, 0.08);
+    --border-strong: rgba(28, 27, 24, 0.15);
+    --shadow-soft: 0 4px 30px rgba(28, 27, 24, 0.06);
+    --shadow-card: 0 10px 40px rgba(28, 27, 24, 0.08);
   }
 
   html { scroll-behavior: smooth; }
 
   body {
-    font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.6;
+    font-family: 'Noto Sans SC', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.8;
     overflow-x: hidden;
     min-height: 100vh;
   }
 
-  /* ===== 背景粒子效果 ===== */
-  .particles {
+  /* ===== 宣纸纹理背景 ===== */
+  .paper-texture {
     position: fixed;
     top: 0;
     left: 0;
@@ -46,50 +50,14 @@
     height: 100%;
     pointer-events: none;
     z-index: 0;
-    overflow: hidden;
+    opacity: 0.4;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(176, 137, 104, 0.06) 0%, transparent 50%),
+      radial-gradient(circle at 85% 80%, rgba(74, 124, 89, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(201, 162, 39, 0.03) 0%, transparent 60%);
   }
 
-  .particles::before,
-  .particles::after {
-    content: '';
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(100px);
-    opacity: 0.35;
-  }
-
-  .particles::before {
-    width: 500px;
-    height: 500px;
-    background: var(--accent);
-    top: -150px;
-    right: -100px;
-    animation: float1 18s ease-in-out infinite;
-  }
-
-  .particles::after {
-    width: 450px;
-    height: 450px;
-    background: var(--accent-2);
-    bottom: -100px;
-    left: -50px;
-    animation: float2 22s ease-in-out infinite;
-  }
-
-  @keyframes float1 {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    33% { transform: translate(-60px, 40px) scale(1.15); }
-    66% { transform: translate(40px, -30px) scale(0.9); }
-  }
-
-  @keyframes float2 {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    33% { transform: translate(50px, -40px) scale(1.1); }
-    66% { transform: translate(-40px, 30px) scale(0.95); }
-  }
-
-  /* 网格背景 */
-  .grid-bg {
+  .paper-noise {
     position: fixed;
     top: 0;
     left: 0;
@@ -97,12 +65,8 @@
     height: 100%;
     pointer-events: none;
     z-index: 0;
-    background-image: 
-      linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
-    background-size: 50px 50px;
-    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
-    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
   }
 
   /* ===== 导航栏 ===== */
@@ -112,14 +76,14 @@
     left: 0;
     right: 0;
     z-index: 100;
-    padding: 18px 40px;
+    padding: 18px 48px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    background: rgba(5, 5, 10, 0.7);
-    border-bottom: 1px solid var(--border-soft);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    background: rgba(245, 241, 232, 0.85);
+    border-bottom: 1px solid var(--border);
     transform: translateY(-100%);
     animation: slideDown 0.8s ease 0.2s forwards;
   }
@@ -131,29 +95,45 @@
   .nav-brand {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-weight: 700;
-    font-size: 17px;
-    letter-spacing: -0.02em;
+    gap: 14px;
   }
 
-  .nav-brand .logo {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  .nav-seal {
+    width: 36px;
+    height: 36px;
+    background: var(--celadon);
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
-    box-shadow: 0 0 20px var(--accent-glow);
+    color: var(--paper);
+    font-family: 'Noto Serif SC', serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 0;
+    box-shadow: 0 2px 10px rgba(74, 124, 89, 0.2);
   }
 
-  .nav-brand span {
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .nav-brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+
+  .nav-brand-cn {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: 0.15em;
+  }
+
+  .nav-brand-en {
+    font-size: 10px;
+    color: var(--ink-mute);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
   }
 
   .nav-links {
@@ -163,26 +143,30 @@
   }
 
   .nav-links a {
-    color: var(--text-soft);
+    color: var(--ink-soft);
     text-decoration: none;
     font-size: 14px;
     font-weight: 500;
     transition: color 0.3s ease;
     position: relative;
+    font-family: 'Noto Serif SC', serif;
+    letter-spacing: 0.1em;
   }
 
-  .nav-links a:hover { color: var(--accent); }
+  .nav-links a:hover { color: var(--celadon); }
   .nav-links a::after {
     content: '';
     position: absolute;
-    bottom: -4px;
-    left: 0;
-    width: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--accent), var(--accent-2));
-    transition: width 0.3s ease;
+    bottom: -6px;
+    left: 50%;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--celadon);
+    transform: translateX(-50%) scale(0);
+    transition: transform 0.3s ease;
   }
-  .nav-links a:hover::after { width: 100%; }
+  .nav-links a:hover::after { transform: translateX(-50%) scale(1); }
 
   /* ===== Hero 区域 ===== */
   .hero {
@@ -190,223 +174,264 @@
     z-index: 1;
     min-height: 100vh;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 120px 24px 80px;
-  }
-
-  .hero-avatar {
-    width: 140px;
-    height: 140px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2), var(--accent-3));
-    display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 32px;
-    box-shadow: 0 0 60px var(--accent-glow), 0 0 100px rgba(168, 85, 247, 0.2);
-    animation: avatarGlow 3s ease-in-out infinite;
-    opacity: 0;
-    transform: scale(0.8);
-    animation: avatarGlow 3s ease-in-out infinite, fadeUp 0.8s ease 0.3s forwards;
+    padding: 120px 40px 80px;
     overflow: hidden;
   }
 
-  .kirin-avatar {
-    width: 100px;
-    height: 100px;
-    animation: kirinFloat 4s ease-in-out infinite;
-  }
-
-  .kirin-avatar svg {
+  .hero-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    background-image: url('art-cover-song.png');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.15;
+    z-index: -1;
   }
 
-  @keyframes kirinFloat {
-    0%, 100% { transform: translateY(0) rotate(-2deg); }
-    50% { transform: translateY(-8px) rotate(2deg); }
-  }
-
-  @keyframes avatarGlow {
-    0%, 100% { box-shadow: 0 0 60px var(--accent-glow), 0 0 100px rgba(168, 85, 247, 0.2); }
-    50% { box-shadow: 0 0 80px var(--accent-glow), 0 0 120px rgba(168, 85, 247, 0.3); }
-  }
-
-  .hero-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 18px;
-    background: rgba(0, 212, 255, 0.08);
-    border: 1px solid rgba(0, 212, 255, 0.2);
-    border-radius: 100px;
-    font-size: 13px;
-    color: var(--accent);
-    margin-bottom: 28px;
-    font-family: 'JetBrains Mono', monospace;
-    opacity: 0;
-    transform: translateY(20px);
-    animation: fadeUp 0.8s ease 0.5s forwards;
-  }
-
-  .hero-status::before {
+  .hero-bg::after {
     content: '';
-    width: 7px;
-    height: 7px;
-    background: var(--accent);
-    border-radius: 50%;
-    animation: pulse 2s ease-in-out infinite;
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+      var(--paper) 0%,
+      transparent 20%,
+      transparent 80%,
+      var(--paper) 100%);
   }
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
+  .hero-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    max-width: 1160px;
+    width: 100%;
+    align-items: center;
+  }
+
+  .hero-text {
+    opacity: 0;
+    transform: translateX(-30px);
+    animation: fadeInLeft 1s ease 0.5s forwards;
+  }
+
+  @keyframes fadeInLeft {
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .hero-vertical-title {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 13px;
+    letter-spacing: 0.5em;
+    color: var(--celadon);
+    margin-bottom: 28px;
+    font-weight: 500;
+    opacity: 0.8;
   }
 
   .hero h1 {
-    font-size: clamp(36px, 7vw, 72px);
-    font-weight: 800;
-    line-height: 1.1;
-    letter-spacing: -0.03em;
-    margin-bottom: 20px;
-    max-width: 800px;
-    opacity: 0;
-    transform: translateY(30px);
-    animation: fadeUp 0.8s ease 0.7s forwards;
+    font-family: 'Noto Serif SC', serif;
+    font-size: clamp(64px, 10vw, 120px);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: 0.05em;
+    margin-bottom: 24px;
+    color: var(--ink);
+    position: relative;
   }
 
-  .hero h1 .gradient {
-    background: linear-gradient(135deg, var(--accent), var(--accent-2) 50%, var(--accent-3));
+  .hero h1 .char {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--ink) 0%, var(--celadon) 60%, var(--gold) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  .hero .subtitle {
-    font-size: clamp(16px, 2vw, 20px);
-    color: var(--text-soft);
-    max-width: 600px;
-    margin-bottom: 20px;
-    opacity: 0;
-    transform: translateY(30px);
-    animation: fadeUp 0.8s ease 0.9s forwards;
+  .hero-subtitle {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 18px;
+    color: var(--ink-soft);
+    margin-bottom: 16px;
+    letter-spacing: 0.2em;
+    font-weight: 500;
   }
 
-  .hero .typing {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 16px;
-    color: var(--accent);
-    margin-bottom: 48px;
-    opacity: 0;
-    transform: translateY(30px);
-    animation: fadeUp 0.8s ease 1.1s forwards;
+  .hero-desc {
+    font-size: 15px;
+    color: var(--ink-soft);
+    line-height: 2;
+    margin-bottom: 32px;
+    max-width: 420px;
   }
 
-  .typing::after {
-    content: '|';
-    animation: blink 1s step-end infinite;
-  }
-
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
-  }
-
-  @keyframes fadeUp {
-    to { opacity: 1; transform: translateY(0); }
+  .hero-quote {
+    display: inline-block;
+    padding: 16px 22px;
+    border-left: 2px solid var(--celadon);
+    border-right: 2px solid var(--ochre);
+    font-family: 'Noto Serif SC', serif;
+    font-size: 14px;
+    color: var(--ink-soft);
+    font-style: italic;
+    letter-spacing: 0.05em;
+    line-height: 2;
   }
 
   .hero-cta {
     display: flex;
-    gap: 16px;
+    gap: 14px;
+    margin-top: 32px;
     flex-wrap: wrap;
-    justify-content: center;
-    opacity: 0;
-    transform: translateY(30px);
-    animation: fadeUp 0.8s ease 1.3s forwards;
   }
 
   .btn {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 14px 28px;
-    font-size: 15px;
+    padding: 13px 26px;
+    font-size: 14px;
     font-weight: 500;
-    border-radius: 12px;
+    border-radius: 8px;
     text-decoration: none;
     transition: all 0.3s ease;
     cursor: pointer;
     border: none;
-    font-family: inherit;
+    font-family: 'Noto Serif SC', serif;
+    letter-spacing: 0.08em;
   }
 
   .btn-primary {
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    color: white;
-    box-shadow: 0 4px 24px var(--accent-glow);
+    background: var(--celadon);
+    color: var(--paper);
+    box-shadow: 0 4px 16px rgba(74, 124, 89, 0.25);
   }
 
   .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 40px var(--accent-glow);
+    background: var(--jade);
+    box-shadow: 0 8px 24px rgba(74, 124, 89, 0.3);
   }
 
   .btn-secondary {
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--text);
-    border: 1px solid var(--border);
-    backdrop-filter: blur(10px);
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--border-strong);
   }
 
   .btn-secondary:hover {
-    background: rgba(0, 212, 255, 0.06);
-    border-color: rgba(0, 212, 255, 0.3);
+    border-color: var(--celadon);
+    color: var(--celadon);
+    background: rgba(74, 124, 89, 0.04);
   }
 
-  .scroll-hint {
+  .hero-image {
+    position: relative;
+    opacity: 0;
+    transform: translateX(30px);
+    animation: fadeInRight 1s ease 0.7s forwards;
+  }
+
+  @keyframes fadeInRight {
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .hero-scroll-painting {
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 30px 60px rgba(28, 27, 24, 0.15), 0 0 0 1px var(--border);
+    aspect-ratio: 4/3;
+    background: var(--paper-deep);
+  }
+
+  .hero-scroll-painting img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .scroll-painting-frame {
     position: absolute;
-    bottom: 40px;
+    inset: 12px;
+    border: 1px solid rgba(28, 27, 24, 0.1);
+    border-radius: 2px;
+    pointer-events: none;
+  }
+
+  .scroll-painting-seal {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    background: rgba(176, 137, 104, 0.9);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--paper);
+    font-family: 'Noto Serif SC', serif;
+    font-weight: 700;
+    font-size: 18px;
+    writing-mode: vertical-rl;
+    letter-spacing: 0.05em;
+    box-shadow: 0 2px 8px rgba(176, 137, 104, 0.3);
+  }
+
+  .scroll-down-hint {
+    position: absolute;
+    bottom: 36px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    color: var(--text-mute);
-    font-size: 12px;
+    gap: 10px;
     opacity: 0;
-    animation: fadeUp 0.8s ease 1.6s forwards;
+    animation: fadeUp 0.8s ease 1.5s forwards;
   }
 
-  .scroll-hint .mouse {
-    width: 24px;
-    height: 38px;
-    border: 2px solid var(--text-mute);
-    border-radius: 12px;
+  .scroll-down-hint span {
+    font-size: 11px;
+    color: var(--ink-mute);
+    letter-spacing: 0.2em;
+    font-family: 'Noto Serif SC', serif;
+  }
+
+  .scroll-line {
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(180deg, var(--ink-mute), transparent);
     position: relative;
+    overflow: hidden;
   }
 
-  .scroll-hint .mouse::before {
+  .scroll-line::after {
     content: '';
     position: absolute;
-    top: 6px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 4px;
-    height: 8px;
-    background: var(--text-mute);
-    border-radius: 2px;
-    animation: scrollDown 2s ease-in-out infinite;
+    top: -50%;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    background: var(--celadon);
+    animation: scrollDrop 2.5s ease-in-out infinite;
   }
 
-  @keyframes scrollDown {
-    0%, 100% { transform: translateX(-50%) translateY(0); opacity: 1; }
-    50% { transform: translateX(-50%) translateY(12px); opacity: 0.3; }
+  @keyframes scrollDrop {
+    0% { top: -50%; }
+    100% { top: 100%; }
+  }
+
+  @keyframes fadeUp {
+    to { opacity: 1; }
   }
 
   /* ===== 通用区块 ===== */
@@ -416,9 +441,9 @@
   }
 
   .section-inner {
-    max-width: 1200px;
+    max-width: 1160px;
     margin: 0 auto;
-    padding: 100px 24px;
+    padding: 100px 40px;
   }
 
   .section-header {
@@ -426,35 +451,52 @@
     margin-bottom: 64px;
   }
 
-  .section-label {
-    display: inline-block;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--accent);
-    margin-bottom: 14px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
+  .section-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .section-mark::before,
+  .section-mark::after {
+    content: '';
+    width: 24px;
+    height: 1px;
+    background: var(--border-strong);
+  }
+
+  .section-mark-en {
+    font-size: 11px;
+    color: var(--ink-mute);
+    letter-spacing: 0.3em;
     font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
   }
 
   .section-title {
-    font-size: clamp(28px, 4vw, 42px);
+    font-family: 'Noto Serif SC', serif;
+    font-size: clamp(28px, 3.5vw, 40px);
     font-weight: 700;
-    letter-spacing: -0.02em;
+    letter-spacing: 0.08em;
     margin-bottom: 14px;
+    color: var(--ink);
   }
 
   .section-subtitle {
-    font-size: 17px;
-    color: var(--text-soft);
-    max-width: 520px;
+    font-size: 15px;
+    color: var(--ink-soft);
+    max-width: 500px;
     margin: 0 auto;
+    line-height: 1.9;
+    font-family: 'Noto Serif SC', serif;
+    font-weight: 400;
   }
 
   .reveal {
     opacity: 0;
     transform: translateY(40px);
-    transition: all 0.8s ease;
+    transition: all 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
   .reveal.active {
@@ -464,410 +506,434 @@
 
   /* ===== About 关于我 ===== */
   .about {
-    background: linear-gradient(180deg, transparent, rgba(0, 212, 255, 0.02), transparent);
+    background: linear-gradient(180deg, transparent, rgba(74, 124, 89, 0.03), transparent);
   }
 
   .about-grid {
     display: grid;
-    grid-template-columns: 1fr 1.2fr;
-    gap: 60px;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 70px;
     align-items: center;
   }
 
   .about-visual {
     position: relative;
-    aspect-ratio: 1;
-    border-radius: 24px;
-    background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(168, 85, 247, 0.1));
-    border: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 120px;
-    overflow: hidden;
   }
 
-  .about-quote {
-    text-align: center;
-    padding: 40px;
+  .about-painting {
     position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    aspect-ratio: 3/4;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border);
   }
 
-  .about-quote .quote-mark {
-    font-size: 80px;
-    line-height: 1;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-family: Georgia, serif;
-    opacity: 0.5;
-    margin-bottom: -20px;
+  .about-painting img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
-  .about-quote p {
-    font-size: 18px;
-    line-height: 1.8;
-    color: var(--text);
-    font-weight: 500;
-    font-style: italic;
-  }
-
-  .about-visual::before {
+  .about-painting::after {
     content: '';
     position: absolute;
-    inset: -2px;
-    border-radius: 26px;
-    background: linear-gradient(135deg, var(--accent), transparent 40%, transparent 60%, var(--accent-2));
-    z-index: -1;
-    opacity: 0.5;
-    animation: borderGlow 4s ease-in-out infinite;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 50%, rgba(28, 27, 24, 0.4));
+    pointer-events: none;
   }
 
-  @keyframes borderGlow {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 0.6; }
+  .about-painting-caption {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    color: var(--paper);
+    z-index: 2;
+  }
+
+  .about-painting-caption h4 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    letter-spacing: 0.1em;
+  }
+
+  .about-painting-caption p {
+    font-size: 12px;
+    opacity: 0.75;
+    letter-spacing: 0.05em;
   }
 
   .about-text h2 {
-    font-size: clamp(26px, 3vw, 36px);
+    font-family: 'Noto Serif SC', serif;
+    font-size: clamp(22px, 2.5vw, 30px);
     font-weight: 700;
-    letter-spacing: -0.02em;
-    margin-bottom: 20px;
+    letter-spacing: 0.05em;
+    margin-bottom: 24px;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+
+  .about-text h2 .highlight {
+    color: var(--celadon);
+    position: relative;
   }
 
   .about-text p {
-    color: var(--text-soft);
-    font-size: 16px;
-    line-height: 1.8;
+    color: var(--ink-soft);
+    font-size: 15px;
+    line-height: 2;
     margin-bottom: 16px;
   }
 
   .about-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    gap: 12px;
     margin-top: 32px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
   }
 
   .stat {
-    padding: 24px 16px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-soft);
-    border-radius: 16px;
     text-align: center;
-    backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
-  }
-
-  .stat:hover {
-    border-color: var(--border);
-    transform: translateY(-2px);
+    padding: 16px 10px;
   }
 
   .stat-number {
+    font-family: 'Noto Serif SC', serif;
     font-size: 32px;
     font-weight: 700;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 4px;
+    color: var(--celadon);
+    margin-bottom: 6px;
+    line-height: 1;
   }
 
   .stat-label {
-    font-size: 13px;
-    color: var(--text-soft);
+    font-size: 12px;
+    color: var(--ink-mute);
+    letter-spacing: 0.1em;
+    font-family: 'Noto Serif SC', serif;
   }
 
-  /* ===== AI Toolbox 工具箱 ===== */
+  /* ===== AI Toolbox 工具 ===== */
   .tool-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
   }
 
   .tool-card {
-    padding: 28px 24px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-soft);
-    border-radius: 18px;
-    backdrop-filter: blur(10px);
-    transition: all 0.4s ease;
     position: relative;
+    padding: 24px 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     overflow: hidden;
   }
 
   .tool-card::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-image: var(--tool-bg);
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.5s ease;
+  }
+
+  .tool-card:hover::before {
+    opacity: 0.08;
   }
 
   .tool-card:hover {
     transform: translateY(-4px);
-    border-color: var(--border);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-card);
+    border-color: var(--celadon);
   }
 
-  .tool-card:hover::before {
-    opacity: 1;
-  }
-
-  .tool-icon {
-    width: 52px;
-    height: 52px;
-    border-radius: 12px;
+  .tool-seal {
+    width: 42px;
+    height: 42px;
+    border-radius: 6px;
+    background: rgba(74, 124, 89, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 26px;
-    margin-bottom: 18px;
+    margin-bottom: 16px;
+    position: relative;
+    z-index: 1;
+    font-family: 'Noto Serif SC', serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--celadon);
+    border: 1px solid rgba(74, 124, 89, 0.15);
+    letter-spacing: 0;
   }
 
-  .tool-card:nth-child(1) .tool-icon { background: rgba(0, 212, 255, 0.1); }
-  .tool-card:nth-child(2) .tool-icon { background: rgba(168, 85, 247, 0.1); }
-  .tool-card:nth-child(3) .tool-icon { background: rgba(236, 72, 153, 0.1); }
-  .tool-card:nth-child(4) .tool-icon { background: rgba(245, 158, 11, 0.1); }
-  .tool-card:nth-child(5) .tool-icon { background: rgba(34, 197, 94, 0.1); }
-  .tool-card:nth-child(6) .tool-icon { background: rgba(249, 115, 22, 0.1); }
-
   .tool-card h3 {
-    font-size: 18px;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 17px;
     font-weight: 600;
     margin-bottom: 8px;
+    letter-spacing: 0.05em;
+    position: relative;
+    z-index: 1;
   }
 
   .tool-card p {
-    color: var(--text-soft);
-    font-size: 14px;
-    line-height: 1.6;
-    margin-bottom: 16px;
-  }
-
-  .tool-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .tool-tag {
-    padding: 4px 10px;
-    background: rgba(0, 212, 255, 0.08);
-    color: var(--accent);
-    font-size: 12px;
-    border-radius: 6px;
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  /* ===== Works AI作品 ===== */
-  .works {
-    background: linear-gradient(180deg, transparent, rgba(168, 85, 247, 0.02), transparent);
-  }
-
-  .work-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 24px;
-  }
-
-  .work-card {
+    color: var(--ink-soft);
+    font-size: 13px;
+    line-height: 1.7;
     position: relative;
-    border-radius: 18px;
+    z-index: 1;
+  }
+
+  .tool-index {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-size: 13px;
+    color: var(--ink-mute);
+    font-family: 'Noto Serif SC', serif;
+    opacity: 0.5;
+    z-index: 1;
+    font-weight: 500;
+  }
+
+  /* ===== Gallery 作品画廊 ===== */
+  .gallery {
+    background: linear-gradient(180deg, transparent, rgba(176, 137, 104, 0.03), transparent);
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .gallery-item {
+    position: relative;
+    border-radius: 6px;
     overflow: hidden;
-    background: var(--bg-card);
-    border: 1px solid var(--border-soft);
-    transition: all 0.4s ease;
     aspect-ratio: 4/3;
+    cursor: pointer;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--border);
+    transition: all 0.4s ease;
   }
 
-  .work-card:hover {
-    transform: translateY(-4px);
-    border-color: var(--border);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  .gallery-item:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-card);
   }
 
-  .work-image {
+  .gallery-item img {
     width: 100%;
     height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 80px;
-    position: relative;
+    object-fit: cover;
+    transition: transform 0.6s ease;
   }
 
-  .work-card:nth-child(1) .work-image { background: linear-gradient(135deg, #1e1b4b, #312e81); }
-  .work-card:nth-child(2) .work-image { background: linear-gradient(135deg, #831843, #be185d); }
-  .work-card:nth-child(3) .work-image { background: linear-gradient(135deg, #134e4a, #0f766e); }
-  .work-card:nth-child(4) .work-image { background: linear-gradient(135deg, #78350f, #b45309); }
+  .gallery-item:hover img {
+    transform: scale(1.06);
+  }
 
-  .work-overlay {
+  .gallery-overlay {
     position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 24px;
-    background: linear-gradient(transparent, rgba(5, 5, 10, 0.95));
-    transform: translateY(30%);
-    transition: transform 0.4s ease;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(28, 27, 24, 0.85));
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 20px;
   }
 
-  .work-card:hover .work-overlay {
-    transform: translateY(0);
+  .gallery-item:hover .gallery-overlay {
+    opacity: 1;
   }
 
-  .work-overlay h3 {
+  .gallery-overlay h3 {
+    font-family: 'Noto Serif SC', serif;
     font-size: 18px;
     font-weight: 600;
+    color: var(--paper);
     margin-bottom: 6px;
+    letter-spacing: 0.1em;
   }
 
-  .work-overlay p {
-    color: var(--text-soft);
-    font-size: 13px;
-    line-height: 1.5;
+  .gallery-overlay p {
+    font-size: 12px;
+    color: rgba(245, 241, 232, 0.7);
+    letter-spacing: 0.05em;
   }
 
-  /* ===== 精选视频作品 ===== */
-  .featured-work {
+  .gallery-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    background: rgba(201, 162, 39, 0.12);
+    border-radius: 3px;
+    font-size: 10px;
+    color: var(--gold);
+    font-family: 'Noto Serif SC', serif;
+    margin-bottom: 8px;
+    letter-spacing: 0.1em;
+    border: 1px solid rgba(201, 162, 39, 0.2);
+  }
+
+  /* Featured work - video */
+  .featured-video-section {
+    margin-bottom: 50px;
+  }
+
+  .featured-video {
     display: grid;
-    grid-template-columns: 1.2fr 1fr;
+    grid-template-columns: 1.3fr 1fr;
     gap: 40px;
     align-items: center;
-    padding: 32px;
-    background: var(--bg-card);
+    padding: 28px;
+    background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 24px;
+    border-radius: 14px;
     backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-soft);
   }
 
-  .video-wrapper {
+  .video-container {
     position: relative;
-    border-radius: 16px;
+    border-radius: 8px;
     overflow: hidden;
     aspect-ratio: 16/9;
-    background: var(--bg-soft);
+    background: var(--ink);
     cursor: pointer;
   }
 
-  .work-video {
+  .video-container video {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
   }
 
-  .video-overlay {
+  .video-play-overlay {
     position: absolute;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(28, 27, 24, 0.2);
     transition: all 0.3s ease;
     pointer-events: none;
   }
 
-  .video-wrapper:hover .video-overlay {
-    background: rgba(0, 0, 0, 0.3);
+  .video-container:hover .video-play-overlay {
+    background: rgba(28, 27, 24, 0.3);
   }
 
-  .play-btn {
-    width: 70px;
-    height: 70px;
+  .video-play-btn {
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    background: var(--celadon);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    box-shadow: 0 4px 30px var(--accent-glow);
+    color: var(--paper);
+    box-shadow: 0 4px 20px rgba(74, 124, 89, 0.4);
     transition: all 0.3s ease;
-    padding-left: 4px;
+    padding-left: 2px;
   }
 
-  .video-wrapper:hover .play-btn {
+  .video-container:hover .video-play-btn {
     transform: scale(1.1);
-    box-shadow: 0 8px 40px var(--accent-glow);
   }
 
-  .video-wrapper.playing .video-overlay,
-  .video-wrapper.playing .play-btn {
+  .video-container.playing .video-play-overlay {
     opacity: 0;
   }
 
-  .featured-info .work-badge {
+  .featured-info .badge {
     display: inline-block;
-    padding: 6px 14px;
-    background: rgba(0, 212, 255, 0.1);
-    border: 1px solid rgba(0, 212, 255, 0.2);
-    border-radius: 100px;
-    font-size: 13px;
-    color: var(--accent);
-    margin-bottom: 16px;
+    padding: 5px 14px;
+    background: rgba(201, 162, 39, 0.08);
+    border: 1px solid rgba(201, 162, 39, 0.2);
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--gold);
+    margin-bottom: 14px;
+    font-family: 'Noto Serif SC', serif;
+    letter-spacing: 0.15em;
   }
 
   .featured-info h3 {
-    font-size: 28px;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 24px;
     font-weight: 700;
-    letter-spacing: -0.02em;
-    margin-bottom: 12px;
-    background: linear-gradient(135deg, var(--text), var(--accent));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
   }
 
   .featured-info > p {
-    color: var(--text-soft);
-    font-size: 15px;
-    line-height: 1.8;
-    margin-bottom: 20px;
+    color: var(--ink-soft);
+    font-size: 14px;
+    line-height: 1.9;
+    margin-bottom: 16px;
   }
 
-  .work-meta {
+  .featured-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: 12px;
   }
 
-  .work-meta span {
-    font-size: 13px;
-    color: var(--text-mute);
+  .featured-meta span {
+    font-size: 12px;
+    color: var(--ink-mute);
+    font-family: 'Noto Serif SC', serif;
   }
 
   /* ===== Skills 技能 ===== */
-  .skills-content {
-    max-width: 900px;
+  .skills-wrap {
+    max-width: 860px;
     margin: 0 auto;
   }
 
-  .skill-category {
-    margin-bottom: 40px;
+  .skill-group {
+    margin-bottom: 36px;
+    padding-bottom: 36px;
+    border-bottom: 1px solid var(--border);
   }
 
-  .skill-category h3 {
-    font-size: 18px;
+  .skill-group:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .skill-group-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 16px;
     font-weight: 600;
     margin-bottom: 16px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    letter-spacing: 0.08em;
+    color: var(--ink);
   }
 
-  .skill-category h3::before {
-    content: '';
-    width: 4px;
-    height: 18px;
-    background: linear-gradient(180deg, var(--accent), var(--accent-2));
-    border-radius: 2px;
+  .skill-group-title .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--celadon);
   }
 
   .skill-tags {
@@ -877,43 +943,49 @@
   }
 
   .skill-tag {
-    padding: 10px 18px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-soft);
-    border-radius: 10px;
-    font-size: 14px;
-    color: var(--text);
+    padding: 8px 16px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--ink-soft);
     transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
+    font-family: 'Noto Serif SC', serif;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    letter-spacing: 0.05em;
+  }
+
+  .skill-tag::before {
+    content: '·';
+    color: var(--celadon);
+    font-weight: 700;
   }
 
   .skill-tag:hover {
-    border-color: var(--accent);
-    background: rgba(0, 212, 255, 0.06);
+    border-color: var(--celadon);
+    color: var(--celadon);
     transform: translateY(-2px);
+    background: rgba(74, 124, 89, 0.04);
   }
-
-  .skill-tag .emoji { font-size: 16px; }
 
   /* ===== Contact 联系 ===== */
   .contact {
-    background: linear-gradient(180deg, transparent, rgba(0, 212, 255, 0.02));
+    background: linear-gradient(180deg, transparent, rgba(74, 124, 89, 0.03));
   }
 
   .contact-card {
-    max-width: 600px;
+    max-width: 580px;
     margin: 0 auto;
     padding: 48px 40px;
-    background: var(--bg-card);
+    background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 24px;
-    backdrop-filter: blur(20px);
+    border-radius: 14px;
+    backdrop-filter: blur(15px);
     text-align: center;
     position: relative;
-    overflow: hidden;
+    box-shadow: var(--shadow-soft);
   }
 
   .contact-card::before {
@@ -922,166 +994,191 @@
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 200px;
+    width: 120px;
     height: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    background: linear-gradient(90deg, transparent, var(--celadon), var(--gold), transparent);
+  }
+
+  .contact-seal {
+    width: 56px;
+    height: 56px;
+    background: var(--celadon);
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--paper);
+    font-family: 'Noto Serif SC', serif;
+    font-weight: 700;
+    font-size: 24px;
+    margin-bottom: 18px;
+    box-shadow: 0 4px 16px rgba(74, 124, 89, 0.25);
   }
 
   .contact-card h2 {
-    font-size: 28px;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 26px;
     font-weight: 700;
-    margin-bottom: 12px;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
   }
 
   .contact-card > p {
-    color: var(--text-soft);
-    margin-bottom: 32px;
-    font-size: 16px;
+    color: var(--ink-soft);
+    margin-bottom: 28px;
+    font-size: 14px;
+    line-height: 1.9;
+    font-family: 'Noto Serif SC', serif;
   }
 
   .contact-links {
     display: flex;
     justify-content: center;
-    gap: 16px;
+    gap: 10px;
     flex-wrap: wrap;
   }
 
   .contact-link {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px 20px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border-soft);
-    border-radius: 12px;
-    color: var(--text);
+    gap: 8px;
+    padding: 10px 18px;
+    background: rgba(28, 27, 24, 0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--ink-soft);
     text-decoration: none;
-    font-size: 14px;
+    font-size: 13px;
     transition: all 0.3s ease;
+    font-family: 'Noto Serif SC', serif;
+  }
+
+  .contact-link svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   .contact-link:hover {
-    border-color: var(--accent);
-    background: rgba(0, 212, 255, 0.06);
+    border-color: var(--celadon);
+    color: var(--celadon);
+    background: rgba(74, 124, 89, 0.04);
     transform: translateY(-2px);
   }
-
-  .contact-link .icon { font-size: 18px; }
 
   /* ===== Footer ===== */
   footer {
     position: relative;
     z-index: 1;
-    padding: 48px 24px;
+    padding: 36px 24px;
     text-align: center;
-    border-top: 1px solid var(--border-soft);
+    border-top: 1px solid var(--border);
   }
 
   footer p {
-    color: var(--text-mute);
-    font-size: 13px;
-  }
-
-  footer a {
-    color: var(--accent);
-    text-decoration: none;
+    color: var(--ink-mute);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    font-family: 'Noto Serif SC', serif;
   }
 
   /* ===== 响应式 ===== */
-  @media (max-width: 768px) {
-    nav { padding: 14px 20px; }
+  @media (max-width: 900px) {
+    nav { padding: 14px 24px; }
     .nav-links { display: none; }
-    .section-inner { padding: 70px 20px; }
+    .hero { padding: 100px 24px 60px; }
+    .hero-content {
+      grid-template-columns: 1fr;
+      gap: 40px;
+      text-align: center;
+    }
+    .hero-vertical-title {
+      writing-mode: horizontal-tb;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .hero-desc { margin-left: auto; margin-right: auto; }
+    .hero-quote { text-align: center; }
+    .hero-cta { justify-content: center; }
+    .section-inner { padding: 70px 24px; }
     .about-grid { grid-template-columns: 1fr; gap: 40px; }
-    .about-visual { font-size: 80px; aspect-ratio: 16/10; }
-    .about-stats { gap: 10px; }
-    .stat { padding: 18px 10px; }
-    .stat-number { font-size: 24px; }
-    .tool-grid { grid-template-columns: 1fr; }
-    .work-grid { grid-template-columns: 1fr; }
-    .featured-work {
+    .about-painting { aspect-ratio: 16/10; }
+    .tool-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .gallery-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .featured-video {
       grid-template-columns: 1fr;
       gap: 24px;
-      padding: 20px;
+      padding: 18px;
     }
-    .featured-info h3 { font-size: 22px; }
-    .play-btn { width: 56px; height: 56px; }
-    .hero-avatar { width: 110px; height: 110px; font-size: 48px; }
-    .contact-card { padding: 36px 24px; }
+  }
+
+  @media (max-width: 480px) {
+    .tool-grid { grid-template-columns: 1fr; }
+    .gallery-grid { grid-template-columns: 1fr; }
+    .about-stats { gap: 6px; }
+    .stat-number { font-size: 24px; }
   }
 </style>
 </head>
 <body>
 
-<div class="particles"></div>
-<div class="grid-bg"></div>
+<div class="paper-texture"></div>
+<div class="paper-noise"></div>
 
 <!-- 导航栏 -->
 <nav>
   <div class="nav-brand">
-    <div class="logo">✨</div>
-    <span>Kirin</span> AI
+    <div class="nav-seal">麒</div>
+    <div class="nav-brand-text">
+      <span class="nav-brand-cn">麒麟</span>
+      <span class="nav-brand-en">KIRIN · AI GARDEN</span>
+    </div>
   </div>
   <ul class="nav-links">
     <li><a href="#home">首页</a></li>
     <li><a href="#about">关于</a></li>
-    <li><a href="#tools">工具箱</a></li>
-    <li><a href="#works">作品</a></li>
+    <li><a href="#tools">工具</a></li>
+    <li><a href="#gallery">作品</a></li>
     <li><a href="#contact">联系</a></li>
   </ul>
 </nav>
 
 <!-- Hero 区域 -->
 <section class="hero" id="home">
-  <div class="hero-avatar">
-    <div class="kirin-avatar">
-      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="kirinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#00d4ff"/>
-            <stop offset="50%" style="stop-color:#a855f7"/>
-            <stop offset="100%" style="stop-color:#ec4899"/>
-          </linearGradient>
-        </defs>
-        <!-- 身体 -->
-        <ellipse cx="50" cy="65" rx="28" ry="22" fill="url(#kirinGrad)" opacity="0.9"/>
-        <!-- 头 -->
-        <ellipse cx="35" cy="45" rx="16" ry="14" fill="url(#kirinGrad)"/>
-        <!-- 独角 -->
-        <path d="M32 25 L35 10 L38 25" fill="url(#kirinGrad)" stroke="white" stroke-width="1"/>
-        <!-- 耳朵 -->
-        <ellipse cx="26" cy="35" rx="5" ry="8" fill="url(#kirinGrad)" transform="rotate(-20 26 35)"/>
-        <ellipse cx="44" cy="35" rx="5" ry="8" fill="url(#kirinGrad)" transform="rotate(20 44 35)"/>
-        <!-- 鬃毛 -->
-        <path d="M48 40 Q60 35 65 45 Q70 50 68 55 Q66 48 58 50 Q52 52 48 48 Z" fill="url(#kirinGrad)" opacity="0.8"/>
-        <!-- 腿 -->
-        <rect x="32" y="80" width="6" height="14" rx="2" fill="url(#kirinGrad)"/>
-        <rect x="45" y="80" width="6" height="14" rx="2" fill="url(#kirinGrad)"/>
-        <rect x="58" y="80" width="6" height="14" rx="2" fill="url(#kirinGrad)"/>
-        <!-- 尾巴 -->
-        <path d="M75 62 Q85 58 82 70 Q80 65 75 68 Z" fill="url(#kirinGrad)" opacity="0.8"/>
-        <!-- 眼睛 -->
-        <circle cx="30" cy="46" r="2.5" fill="white"/>
-        <circle cx="30.5" cy="46" r="1.2" fill="#0a0a1a"/>
-        <!-- 鼻子 -->
-        <ellipse cx="22" cy="50" rx="3" ry="2" fill="rgba(255,255,255,0.3)"/>
-      </svg>
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <div class="hero-text">
+      <div class="hero-vertical-title">山巅之上 · 日出之时</div>
+      <h1><span class="char">麒麟</span></h1>
+      <p class="hero-subtitle">AI 创作者 · 数字园丁</p>
+      <p class="hero-desc">翻旧的书、发亮的屏幕、待办的本子，一并摊在灯下。每一段读进来的心思，先在笔尖活过，再被亲手捏成能跑、能用的东西。</p>
+      <div class="hero-quote">
+        宋韵意境 · 科技表达<br>
+        以古人之心，创今日之新
+      </div>
+      <div class="hero-cta">
+        <a href="#gallery" class="btn btn-primary">
+          浏览作品
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+        <a href="#about" class="btn btn-secondary">关于我</a>
+      </div>
+    </div>
+    <div class="hero-image">
+      <div class="hero-scroll-painting">
+        <img src="hero-bg.jpg" alt="麒麟山水图">
+        <div class="scroll-painting-frame"></div>
+        <div class="scroll-painting-seal">麒</div>
+      </div>
     </div>
   </div>
-  <div class="hero-status">● AI Creator · 创作中</div>
-  <h1>你好，我是 <span class="gradient">Kirin</span><br>用 AI 把想法做出来</h1>
-  <p class="subtitle">读进来的心思，先在笔尖活过，再被捏成能跑能用的东西</p>
-  <div class="typing">building = "things that matter"</div>
-  <div class="hero-cta">
-    <a href="#works" class="btn btn-primary">
-      查看作品
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-    </a>
-    <a href="#about" class="btn btn-secondary">了解更多</a>
-  </div>
-  <div class="scroll-hint">
-    <div class="mouse"></div>
-    <span>向下滚动</span>
+  <div class="scroll-down-hint">
+    <span>向 下 滑 动</span>
+    <div class="scroll-line"></div>
   </div>
 </section>
 
@@ -1089,26 +1186,31 @@
 <section class="about" id="about">
   <div class="section-inner">
     <div class="section-header reveal">
-      <span class="section-label">// About Me</span>
-      <h2 class="section-title">关于我</h2>
-      <p class="section-subtitle">用文字和代码，把想法变成现实</p>
+      <div class="section-mark">
+        <span class="section-mark-en">About</span>
+      </div>
+      <h2 class="section-title">关 于 麒 麟</h2>
+      <p class="section-subtitle">在灯下读书、思考、创造的数字园丁</p>
     </div>
     <div class="about-grid">
       <div class="about-visual reveal">
-        <div class="about-quote">
-          <div class="quote-mark">"</div>
-          <p>我总把翻旧的书、发亮的屏幕和待办的本子一并摊在灯下</p>
+        <div class="about-painting">
+          <img src="art-landscape.jpg" alt="山水">
+          <div class="about-painting-caption">
+            <h4>远山有意</h4>
+            <p>AI 生成 · 宋画山水风格</p>
+          </div>
         </div>
       </div>
       <div class="about-text reveal">
-        <h2>把读进来的心思，捏成能跑能用的东西</h2>
-        <p>我是 Kirin。喜欢在灯下读书、思考、创作——翻旧的书、发亮的屏幕、待办的本子，是我工作台的标配。</p>
-        <p>每一段读进来的心思，我会先让它在笔尖活过一遍，然后亲手把它捏成能跑、能用的东西。文字也好，代码也好，AI 作品也好——创造本身就是最有趣的事。</p>
-        <p>这个小站是我的数字花园，记录我在 AI 世界里的探索和创作。欢迎你来逛逛 🌿</p>
+        <h2>把读进来的心思，<br><span class="highlight">捏成能跑能用的东西</span></h2>
+        <p>我是 Kirin（麒麟）。喜欢把翻旧的书、发亮的屏幕和待办的本子一并摊在灯下，让每一段读进来的心思先在笔尖活过。</p>
+        <p>对 AI 充满好奇——从对话生成到视频创作，从工具效率到艺术表达，我热衷于探索 AI 在生活和创作中的各种可能。</p>
+        <p>这个小站是我的数字花园，记录探索的轨迹，也分享那些最终被"捏成"了的东西。欢迎你来逛逛。</p>
         <div class="about-stats">
           <div class="stat">
-            <div class="stat-number">4+</div>
-            <div class="stat-label">主力 AI 工具</div>
+            <div class="stat-number">4</div>
+            <div class="stat-label">主力工具</div>
           </div>
           <div class="stat">
             <div class="stat-number">∞</div>
@@ -1124,116 +1226,133 @@
   </div>
 </section>
 
-<!-- AI Toolbox 工具箱 -->
+<!-- AI Toolbox 工具 -->
 <section id="tools">
   <div class="section-inner">
     <div class="section-header reveal">
-      <span class="section-label">// AI Toolbox</span>
-      <h2 class="section-title">我的 AI 工具箱</h2>
+      <div class="section-mark">
+        <span class="section-mark-en">Toolbox</span>
+      </div>
+      <h2 class="section-title">常 用 工 具</h2>
       <p class="section-subtitle">日常高频使用的 AI 创作伙伴</p>
     </div>
     <div class="tool-grid">
-      <div class="tool-card reveal">
-        <div class="tool-icon">💼</div>
+      <div class="tool-card reveal" style="--tool-bg: url('art-song-tea.jpg');">
+        <span class="tool-index">壹</span>
+        <div class="tool-seal">辦</div>
         <h3>WorkBuddy</h3>
-        <p>工作流 AI 助手，帮我处理各种日常事务，效率拉满。</p>
-        <div class="tool-tags">
-          <span class="tool-tag">效率</span>
-          <span class="tool-tag">办公</span>
-          <span class="tool-tag">助手</span>
-        </div>
+        <p>工作流 AI 助手，处理日常事务，效率拉满。</p>
       </div>
-      <div class="tool-card reveal">
-        <div class="tool-icon">🧠</div>
+      <div class="tool-card reveal" style="--tool-bg: url('art-landscape.jpg');">
+        <span class="tool-index">贰</span>
+        <div class="tool-seal">思</div>
         <h3>DeepSeek</h3>
-        <p>深度思考型 AI，复杂问题、代码推理都靠它，深度又靠谱。</p>
-        <div class="tool-tags">
-          <span class="tool-tag">对话</span>
-          <span class="tool-tag">推理</span>
-          <span class="tool-tag">编程</span>
-        </div>
+        <p>深度思考型 AI，复杂问题与代码推理的好帮手。</p>
       </div>
-      <div class="tool-card reveal">
-        <div class="tool-icon">✨</div>
+      <div class="tool-card reveal" style="--tool-bg: url('art-chrysanthemum.jpg');">
+        <span class="tool-index">叁</span>
+        <div class="tool-seal">創</div>
         <h3>TRAE</h3>
-        <p>AI 编程与创作好帮手，写代码、做网页、搞开发一把好手。</p>
-        <div class="tool-tags">
-          <span class="tool-tag">编程</span>
-          <span class="tool-tag">开发</span>
-          <span class="tool-tag">创作</span>
-        </div>
+        <p>AI 编程与创作好帮手，写代码、做网页一把好手。</p>
       </div>
-      <div class="tool-card reveal">
-        <div class="tool-icon">🌊</div>
+      <div class="tool-card reveal" style="--tool-bg: url('art-plum-crane.jpg');">
+        <span class="tool-index">肆</span>
+        <div class="tool-seal">躍</div>
         <h3>阶跃星辰</h3>
         <p>国产大模型之光，理解中文、生成内容都很对味。</p>
-        <div class="tool-tags">
-          <span class="tool-tag">大模型</span>
-          <span class="tool-tag">中文</span>
-          <span class="tool-tag">创作</span>
-        </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Works 作品展示 -->
-<section class="works" id="works">
+<!-- Gallery 作品画廊 -->
+<section class="gallery" id="gallery">
   <div class="section-inner">
     <div class="section-header reveal">
-      <span class="section-label">// Featured Work</span>
-      <h2 class="section-title">精选作品</h2>
-      <p class="section-subtitle">用 AI 创作的一些有趣项目</p>
+      <div class="section-mark">
+        <span class="section-mark-en">Works</span>
+      </div>
+      <h2 class="section-title">创 作 作 品</h2>
+      <p class="section-subtitle">以宋韵为骨，以科技为笔</p>
     </div>
 
-    <!-- 主打视频作品 -->
-    <div class="featured-work reveal">
-      <div class="video-wrapper">
-        <video class="work-video" controls poster="" playsinline loop muted>
-          <source src="kirin-coffee.mp4" type="video/mp4">
-          你的浏览器不支持视频播放
-        </video>
-        <div class="video-overlay">
-          <div class="play-btn">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8 5v14l11-7z"/>
-            </svg>
+    <!-- 精选视频作品 -->
+    <div class="featured-video-section reveal">
+      <div class="featured-video">
+        <div class="video-container">
+          <video class="work-video" playsinline loop muted>
+            <source src="kirin-coffee.mp4" type="video/mp4">
+            你的浏览器不支持视频播放
+          </video>
+          <div class="video-play-overlay">
+            <div class="video-play-btn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="featured-info">
+          <div class="badge">精 选 作 品</div>
+          <h3>Kirin · 桂花拿铁</h3>
+          <p>AI 生成的创意咖啡短片，一杯桂花拿铁的治愈时光。探索味觉与视觉的碰撞，让咖啡也能有诗意的表达。</p>
+          <div class="featured-meta">
+            <span>时长 · 约 10 秒</span>
+            <span>工具 · AI 视频生成</span>
+            <span>主题 · 咖啡</span>
           </div>
         </div>
       </div>
-      <div class="featured-info">
-        <div class="work-badge">🎬 AI 视频</div>
-        <h3>Kirin · 桂花拿铁</h3>
-        <p>AI 生成的创意咖啡短片，一杯桂花拿铁的治愈时光。用 AI 视频工具制作，探索味觉与视觉的碰撞。</p>
-        <div class="work-meta">
-          <span>🕐 时长: 约 10 秒</span>
-          <span>🛠️ AI 视频生成</span>
-          <span>☕ 咖啡主题</span>
-        </div>
-      </div>
     </div>
 
-    <!-- 其他作品网格 -->
-    <div class="work-grid" style="margin-top: 48px;">
-      <div class="work-card reveal">
-        <div class="work-image">📝</div>
-        <div class="work-overlay">
-          <h3>公众号文章</h3>
-          <p>记录思考与创作的文字作品</p>
+    <!-- 绘画作品画廊 -->
+    <div class="gallery-grid">
+      <div class="gallery-item reveal">
+        <img src="art-cover-song.png" alt="宋韵封面">
+        <div class="gallery-overlay">
+            <span class="gallery-tag">AI 绘画</span>
+            <h3>宋韵山水</h3>
+            <p>宋代美学山水长卷风格</p>
+          </div>
+        </div>
+      <div class="gallery-item reveal">
+        <img src="art-plum-crane.jpg" alt="梅鹤图">
+        <div class="gallery-overlay">
+          <span class="gallery-tag">AI 绘画</span>
+          <h3>梅鹤清韵</h3>
+          <p>梅妻鹤子，清雅脱俗</p>
         </div>
       </div>
-      <div class="work-card reveal">
-        <div class="work-image">🎨</div>
-        <div class="work-overlay">
-          <h3>AI 绘画</h3>
-          <p>用 AI 生成的各种创意图像</p>
+      <div class="gallery-item reveal">
+        <img src="art-song-tea.jpg" alt="宋代茶事">
+        <div class="gallery-overlay">
+          <span class="gallery-tag">AI 绘画</span>
+          <h3>宋茶雅集</h3>
+          <p>宋人点茶，一盏清欢</p>
         </div>
       </div>
-      <div class="work-card reveal">
-        <div class="work-image">🌱</div>
-        <div class="work-overlay">
-          <h3>更多作品</h3>
-          <p>持续创作中，敬请期待...</p>
+      <div class="gallery-item reveal">
+        <img src="art-chrysanthemum.jpg" alt="菊花">
+        <div class="gallery-overlay">
+          <span class="gallery-tag">AI 绘画</span>
+          <h3>秋菊傲霜</h3>
+          <p>采菊东篱下，悠然见南山</p>
+        </div>
+      </div>
+      <div class="gallery-item reveal">
+        <img src="art-qingming.jpg" alt="清明上河图">
+        <div class="gallery-overlay">
+          <span class="gallery-tag">AI 绘画</span>
+          <h3>清明风物</h3>
+          <p>市井烟火，盛世繁华</p>
+        </div>
+      </div>
+      <div class="gallery-item reveal">
+        <img src="art-landscape.jpg" alt="山水">
+        <div class="gallery-overlay">
+          <span class="gallery-tag">AI 绘画</span>
+          <h3>远山有意</h3>
+          <p>山高水长，意境悠远</p>
         </div>
       </div>
     </div>
@@ -1244,40 +1363,41 @@
 <section id="skills">
   <div class="section-inner">
     <div class="section-header reveal">
-      <span class="section-label">// Skills</span>
-      <h2 class="section-title">技能标签</h2>
-      <p class="section-subtitle">我正在学习和使用的 AI 相关技能</p>
+      <div class="section-mark">
+        <span class="section-mark-en">Skills</span>
+      </div>
+      <h2 class="section-title">技 能 树</h2>
+      <p class="section-subtitle">正在学习和使用的 AI 相关技能</p>
     </div>
-    <div class="skills-content reveal">
-      <div class="skill-category">
-        <h3>AI 工具使用</h3>
+    <div class="skills-wrap reveal">
+      <div class="skill-group">
+        <h3 class="skill-group-title"><span class="dot"></span>AI 工具使用</h3>
         <div class="skill-tags">
-          <span class="skill-tag"><span class="emoji">💬</span> Prompt 工程</span>
-          <span class="skill-tag"><span class="emoji">🎨</span> AI 绘画</span>
-          <span class="skill-tag"><span class="emoji">📝</span> AI 写作</span>
-          <span class="skill-tag"><span class="emoji">🎬</span> AI 视频</span>
-          <span class="skill-tag"><span class="emoji">🎵</span> AI 音乐</span>
-          <span class="skill-tag"><span class="emoji">💻</span> AI 编程</span>
+          <span class="skill-tag">Prompt 工程</span>
+          <span class="skill-tag">AI 绘画</span>
+          <span class="skill-tag">AI 写作</span>
+          <span class="skill-tag">AI 视频</span>
+          <span class="skill-tag">AI 编程</span>
         </div>
       </div>
-      <div class="skill-category">
-        <h3>技术栈</h3>
+      <div class="skill-group">
+        <h3 class="skill-group-title"><span class="dot"></span>技术栈</h3>
         <div class="skill-tags">
-          <span class="skill-tag"><span class="emoji">🐍</span> Python</span>
-          <span class="skill-tag"><span class="emoji">🌐</span> HTML / CSS</span>
-          <span class="skill-tag"><span class="emoji">⚡</span> JavaScript</span>
-          <span class="skill-tag"><span class="emoji">📊</span> 数据分析</span>
-          <span class="skill-tag"><span class="emoji">🧠</span> 机器学习基础</span>
+          <span class="skill-tag">Python</span>
+          <span class="skill-tag">HTML / CSS</span>
+          <span class="skill-tag">JavaScript</span>
+          <span class="skill-tag">数据分析</span>
         </div>
       </div>
-      <div class="skill-category">
-        <h3>兴趣领域</h3>
+      <div class="skill-group">
+        <h3 class="skill-group-title"><span class="dot"></span>兴趣领域</h3>
         <div class="skill-tags">
-          <span class="skill-tag"><span class="emoji">🤖</span> 大语言模型</span>
-          <span class="skill-tag"><span class="emoji">🎨</span> AIGC 创作</span>
-          <span class="skill-tag"><span class="emoji">🔬</span> AI 研究</span>
-          <span class="skill-tag"><span class="emoji">🚀</span> 科技产品</span>
-          <span class="skill-tag"><span class="emoji">📚</span> 终身学习</span>
+          <span class="skill-tag">大语言模型</span>
+          <span class="skill-tag">AIGC 创作</span>
+          <span class="skill-tag">阅读写作</span>
+          <span class="skill-tag">咖啡文化</span>
+          <span class="skill-tag">数字花园</span>
+          <span class="skill-tag">宋代美学</span>
         </div>
       </div>
     </div>
@@ -1288,20 +1408,20 @@
 <section class="contact" id="contact">
   <div class="section-inner">
     <div class="contact-card reveal">
-      <span class="section-label">// Get In Touch</span>
-      <h2>找我聊聊</h2>
+      <div class="contact-seal">麒</div>
+      <h2>找 我 聊 聊</h2>
       <p>如果你也喜欢阅读、创作和 AI，欢迎来找我交流！</p>
       <div class="contact-links">
         <a href="mailto:mmcn7400@agent.qq.com" class="contact-link">
-          <span class="icon">📧</span>
-          <span>Email</span>
+          <svg viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          <span>邮箱</span>
         </a>
         <a href="https://github.com/544649560-kirin" target="_blank" class="contact-link">
-          <span class="icon">🐙</span>
+          <svg viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
           <span>GitHub</span>
         </a>
         <a href="#" class="contact-link">
-          <span class="icon">📱</span>
+          <svg viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
           <span>微信</span>
         </a>
       </div>
@@ -1311,7 +1431,7 @@
 
 <!-- Footer -->
 <footer>
-  <p>🤖 Made with AI & ❤️ by Kirin · Hosted on <a href="https://pages.github.com/" target="_blank">GitHub Pages</a></p>
+  <p>山巅之上 · 日出之时 · Made by Kirin · Hosted on GitHub Pages</p>
 </footer>
 
 <script>
@@ -1320,12 +1440,14 @@
 
   function checkReveal() {
     const windowHeight = window.innerHeight;
-    const revealPoint = 120;
+    const revealPoint = 100;
 
-    reveals.forEach(element => {
+    reveals.forEach((element, index) => {
       const revealTop = element.getBoundingClientRect().top;
       if (revealTop < windowHeight - revealPoint) {
-        element.classList.add('active');
+        setTimeout(() => {
+          element.classList.add('active');
+        }, index % 3 * 80);
       }
     });
   }
@@ -1333,59 +1455,16 @@
   window.addEventListener('scroll', checkReveal);
   window.addEventListener('load', checkReveal);
 
-  // 打字机效果
-  const typingTexts = [
-    'reading = "翻旧的书"',
-    'thinking = "发亮的屏幕"',
-    'writing = "待办的本子"',
-    'building = "能跑能用的东西"'
-  ];
-  const typingEl = document.querySelector('.typing');
-  let textIndex = 0;
-  let charIndex = 0;
-  let isDeleting = false;
-
-  function typeWriter() {
-    const currentText = typingTexts[textIndex];
-    
-    if (!isDeleting) {
-      if (charIndex < currentText.length) {
-        typingEl.textContent = currentText.substring(0, charIndex + 1);
-        charIndex++;
-        setTimeout(typeWriter, 70);
-      } else {
-        isDeleting = true;
-        setTimeout(typeWriter, 2500);
-      }
-    } else {
-      if (charIndex > 0) {
-        typingEl.textContent = currentText.substring(0, charIndex - 1);
-        charIndex--;
-        setTimeout(typeWriter, 40);
-      } else {
-        isDeleting = false;
-        textIndex = (textIndex + 1) % typingTexts.length;
-        setTimeout(typeWriter, 300);
-      }
-    }
-  }
-
-  setTimeout(typeWriter, 1500);
-
   // 导航栏滚动效果
-  let lastScroll = 0;
   const nav = document.querySelector('nav');
 
   window.addEventListener('scroll', () => {
     const currentScroll = window.pageYOffset;
-    
-    if (currentScroll > 100) {
-      nav.style.background = 'rgba(5, 5, 10, 0.9)';
+    if (currentScroll > 80) {
+      nav.style.boxShadow = '0 2px 20px rgba(28, 27, 24, 0.06)';
     } else {
-      nav.style.background = 'rgba(5, 5, 10, 0.7)';
+      nav.style.boxShadow = 'none';
     }
-    
-    lastScroll = currentScroll;
   });
 
   // 平滑滚动偏移
@@ -1394,7 +1473,7 @@
       e.preventDefault();
       const target = document.querySelector(this.getAttribute('href'));
       if (target) {
-        const offsetTop = target.offsetTop - 70;
+        const offsetTop = target.offsetTop - 60;
         window.scrollTo({
           top: offsetTop,
           behavior: 'smooth'
@@ -1404,24 +1483,35 @@
   });
 
   // 视频播放交互
-  const videoWrapper = document.querySelector('.video-wrapper');
+  const videoContainer = document.querySelector('.video-container');
   const video = document.querySelector('.work-video');
   
-  if (videoWrapper && video) {
-    videoWrapper.addEventListener('click', function() {
+  if (videoContainer && video) {
+    videoContainer.addEventListener('click', function() {
       if (video.paused) {
         video.play();
-        videoWrapper.classList.add('playing');
+        video.muted = false;
+        videoContainer.classList.add('playing');
       } else {
         video.pause();
-        videoWrapper.classList.remove('playing');
+        videoContainer.classList.remove('playing');
       }
     });
 
     video.addEventListener('ended', function() {
-      videoWrapper.classList.remove('playing');
+      videoContainer.classList.remove('playing');
     });
   }
+
+  // 工具卡片背景
+  const toolCards = document.querySelectorAll('.tool-card');
+  toolCards.forEach(card => {
+    const bg = getComputedStyle(card).getPropertyValue('--tool-bg');
+    if (bg) {
+      card.style.setProperty('--card-bg-img', bg);
+      const before = card.querySelector('::before');
+    }
+  });
 </script>
 
 </body>

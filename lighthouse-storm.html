@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>灯塔 · 风暴</title>
+<style>
+  :root{ --ink:#e8e2d6; --dim:#9aa0a8; }
+  *{ box-sizing:border-box; }
+  html,body{
+    margin:0; padding:0; width:100%; height:100%;
+    background:#05070c; overflow:hidden;
+    font-family:"Songti SC","STSong","Noto Serif SC",serif;
+    color:var(--ink);
+  }
+  #wrap{
+    position:fixed; inset:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  canvas{
+    display:block;
+    image-rendering:pixelated;
+    image-rendering:crisp-edges;
+    box-shadow:0 0 90px rgba(0,0,0,.9);
+  }
+  /* 片名：极简，不抢画面。可用 H 键隐藏（便于录屏） */
+  #plate{
+    position:fixed; left:26px; bottom:22px; z-index:5;
+    pointer-events:none; user-select:none;
+    opacity:.62; transition:opacity .4s ease;
+    text-shadow:0 1px 10px rgba(0,0,0,.9);
+  }
+  #plate.hide{ opacity:0; }
+  #plate .t{
+    font-size:15px; letter-spacing:.42em; margin:0 0 7px;
+    font-weight:600;
+  }
+  #plate .s{
+    font-size:10.5px; letter-spacing:.2em; margin:0; color:var(--dim);
+  }
+  #plate .rule{
+    width:34px; height:1px; margin:9px 0 8px;
+    background:linear-gradient(90deg,rgba(232,226,214,.55),transparent);
+  }
+  @media (max-width:640px){
+    #plate{ left:14px; bottom:12px; }
+    #plate .t{ font-size:12px; letter-spacing:.3em; }
+    #plate .s{ font-size:9px; }
+  }
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="cv"></canvas></div>
+<div id="plate">
+  <p class="t">灯 塔 · 风 暴</p>
+  <div class="rule"></div>
+  <p class="s">THE LAST LIGHT — pixel diorama</p>
+</div>
+<script>
+"use strict";
+/* ═══════════════════════════════════════════════════════════════════
+   风暴灯塔 · 等距像素立体场景
+   ───────────────────────────────────────────────────────────────────
+   纯软件像素渲染：不引任何库，480×270 内部分辨率逐像素写入，
+   再整数倍最近邻放大。每一颗像素都可控，才有真正的像素质感。
+
+   图层顺序（后画的覆盖先画的）：
+     1  天空抖动渐变+ 远景霞光
+     2  三层视差风暴云
+     3  远雨薄纱
+     4  岩石岛屿（静态预渲染）+ 灯塔
+     5  暗海（逐列波面 + 色阶 + 白帽）
+     6  岸线泡沫 + 抛射飞沫
+     7  近景斜雨
+     8  加法光照：灯室辉光 / 旋转光束 / 闪电全场补光
+     9  后期：暗角 + 冷暗暖亮分级
+   ═══════════════════════════════════════════════════════════════ */
+
+// ── 内部像素分辨率 ────────────────────────────────────────────
+// VW 固定 480：横向构图（岛屿 252px 宽、光束横扫）是手调的，不能动。
+// VH 随视口宽高比自适应：竖屏时如果只做 cover 裁切，画面会放大到 7 倍，
+// 480 宽里只剩 ~130px 可见，光束/闪电/海面纵深全被裁掉。
+// 所以竖屏改为「加高内部缓冲」——补天补海，而不是裁两侧。
+const VW = 480;
+// 海平面在画面中的相对高度（0.622 ≈ 168/270，与原手调值一致）
+const SEA_R = 0.622;
+let VH = 270;                    // 由 resize() 按视口比例重算
+let SEA = Math.round(VH * SEA_R);
+const CX = 240;                  // 岛屿 / 灯塔中心 x
+let N = VW * VH;
+
+/* ── 调色板 ──────────────────────────────────────────────────────
+   冷调风暴为底，暖调灯火为焦点。两者比例决定画面的电影感。      */
+const hex = h => [ (h>>16)&255, (h>>8)&255, h&255 ];
+
+// 天空：顶部深黑蓝 → 地平线冷灰蓝（略微提亮，制造纵深）
+const SKY = [
+  hex(0x05070d), hex(0x080c15), hex(0x0c1220), hex(0x111827),
+  hex(0x17202f), hex(0x1e2937), hex(0x27333f), hex(0x313d47),
+  hex(0x3c4750),
+];
+
+// 海面：表层带天光 → 深处近黑
+const SEA_RAMP = [
+  hex(0x2f4256), hex(0x28394b), hex(0x213040), hex(0x1a2735),
+  hex(0x141e2a), hex(0x0e1620), hex(0x090e16), hex(0x05080d),
+];
+const FOAM  = hex(0x9fb6c8);
+const FOAM2 = hex(0xd6e6f0);
+
+// 岩石
+const ROCK_D = hex(0x141821);
+const ROCK_M = hex(0x252c37);
+const ROCK_L = hex(0x3a4453);
+const ROCK_R = hex(0x55677d);
+
+// 灯塔
+const T_WHITE = hex(0xd6dce2);
+const T_SHADE = hex(0x8b95a1);
+const T_DARK  = hex(0x59626d);
+const T_RED   = hex(0x9c3a31);
+const T_RED_D = hex(0x6d2620);
+const WARM    = hex(0xffd28a);
+const WARM_HI = hex(0xfff4d2);
+const LAMP    = hex(0xffe9b8);
+const LAMP_HI = hex(0xfffaf0);   // 灯芯最亮处（加法后接近纯白）
+const METAL   = hex(0x333b45);
+
+const BEAM_C  = hex(0xffb457);
+const BOLT_C  = hex(0xd2e2ff);
+const RAIN_C  = hex(0x8fa6bd);
+
+/* ── 像素缓冲 ────────────────────────────────────────────────────
+   ImageData 的字节序是 RGBA，小端 Uint32 视图即 0xAABBGGRR。       */
+let buf = new Uint32Array(N);
+let imgData = null;
+let offCv = null, offCtx = null;
+let viewCv = null, viewCtx = null;
+// 居中裁切参数（由 resize 计算）
+let cropX = 0, cropY = 0, cropS = 1;
+// VH 变化时按新尺寸重建所有依赖尺寸的缓冲。
+// 之前这些是固定尺寸的常量派生量，改VH 会直接越界或错位。
+function allocBuffers() {
+  N = VW * VH;
+  buf = new Uint32Array(N);
+  statBuf = new Uint32Array(N);
+  statMask = new Uint8Array(N);
+  vig = new Float32Array(N);
+  buildVignette();          // 暗角按 VH 预计算，必须跟着重建
+  rainInit = false;         // 雨滴初始 y 按 VH 铺满，需重新播撒
+  if (offCtx) imgData = offCtx.createImageData(VW, VH);
+}
+
+// Bayer 4×4 有序抖动矩阵 —— 像素质感的关键：
+// 用 16 级量化 + 有序抖动模拟远多于实际色数的渐变。
+const BAYER = [
+   0, 8, 2,10,
+  12, 4,14, 6,
+   3,11, 1, 9,
+  15, 7,13, 5,
+];
+
+function px(x, y, r, g, b) {
+  if (x < 0 || y < 0 || x >= VW || y >= VH) return;
+  // 显式夹紧：Uint32 写入用按位或，负数或超 255 的值会产生垃圾色。
+  // 这里统一收口，避免任何调用方的越界值污染画面。
+  if (r < 0) r = 0; else if (r > 255) r = 255;
+  if (g < 0) g = 0; else if (g > 255) g = 255;
+  if (b < 0) b = 0; else if (b > 255) b = 255;
+  buf[y*VW + x] = 0xff000000 | (b<<16) | (g<<8) | r;
+}
+function pxA(x, y, c, a) {          // alpha 混合
+  if (x < 0 || y < 0 || x >= VW || y >= VH || a <= 0) return;
+  const i = y*VW + x, d = buf[i];
+  const r = d & 255, g = (d>>8)&255, b = (d>>16)&255;
+  px(x, y, r + (c[0]-r)*a, g + (c[1]-g)*a, b + (c[2]-b)*a);
+}
+function addPx(x, y, r, g, b) {     // 加法（用于灯光）
+  if (x < 0 || y < 0 || x >= VW || y >= VH) return;
+  const i = y*VW + x, d = buf[i];
+  let R = (d & 255) + r;
+  let G = ((d>>8)&255) + g;
+  let B = ((d>>16)&255) + b;
+  px(x, y, R>255?255:R, G>255?255:G, B>255?255:B);
+}
+function addC(x, y, c, k) { addPx(x, y, c[0]*k, c[1]*k, c[2]*k); }
+
+// 在色阶上取色，t∈[0,1]，用 Bayer 抖动在相邻两色间过渡
+function ramp(ramp, t, x, y, out) {
+  t = t < 0 ? 0 : t > 1 ? 1 : t;
+  const f = t * (ramp.length - 1);
+  const i = f | 0;
+  const j = i >= ramp.length-1 ? i : i+1;
+  const frac = f - i;
+  const thr = (BAYER[(y & 3)*4 + (x & 3)] + 0.5) / 16;
+  const c = frac > thr ? ramp[j] : ramp[i];
+  out[0] = c[0]; out[1] = c[1]; out[2] = c[2];
+  return out;
+}
+const _c = [0,0,0];
+
+/* ── 值噪声 ─────────────────────────────────────────────────── */
+function hash2(x, y) {
+  let h = (x|0) * 374761393 + (y|0) * 668265263;
+  h = (h ^ (h >> 13)) * 1274126177;
+  return ((h ^ (h >> 16)) >>> 0) / 4294967296;
+}
+function vnoise(x, y) {
+  const xi = Math.floor(x), yi = Math.floor(y);
+  const xf = x - xi, yf = y - yi;
+  const u = xf*xf*(3-2*xf), v = yf*yf*(3-2*yf);
+  const a = hash2(xi,yi),   b = hash2(xi+1,yi);
+  const c = hash2(xi,yi+1), d = hash2(xi+1,yi+1);
+  return (a+(b-a)*u) + ((c+(d-c)*u) - (a+(b-a)*u)) * v;
+}
+function fbm(x, y) {
+  return vnoise(x,y)*0.55 + vnoise(x*2.03,y*2.03)*0.28 + vnoise(x*4.01,y*4.01)*0.17;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   静态层：岩石岛屿 + 灯塔
+   这两层每帧不变，预渲染进独立缓冲，每帧只做一次 blit。
+   ═══════════════════════════════════════════════════════════════ */
+
+const ISL = { cx: CX, hw: 126, peak: 52 };
+
+// 岛屿天际线：中央平台（放灯塔）+ 向两侧跌落的岩体 + 分形起伏
+const topCache = new Float32Array(VW);
+function buildIslandProfile() {
+  for (let x = 0; x < VW; x++) {
+    const t = (x - ISL.cx) / ISL.hw;
+    const at = Math.abs(t);
+    let h;
+    if (at >= 1) { topCache[x] = SEA + 4; continue; }
+    if (at < 0.36) {
+      h = 0.90 + 0.07 * Math.sin(x*0.045 + 1.2);   // 平台，微起伏
+    } else {
+      const u = (at - 0.36) / 0.64;
+      h = 0.90 * (1 - u*u*(0.72 + 0.28*u));          // 向边缘跌落
+    }
+    // 岩石嶙峋感：多尺度噪声叠加。
+    // 单一平滑穹顶看起来像沙丘，必须逐级补高频才像石头。
+    h += (fbm(x*0.042, 1.3) - 0.5) * 0.40 * (1 - at*0.40);
+    h += (fbm(x*0.125, 7.7) - 0.5) * 0.20;
+    h += (fbm(x*0.290, 19.4) - 0.5) * 0.105;        // 细碎棱角
+    h += (fbm(x*0.620, 31.1) - 0.5) * 0.055 * (1 - at*0.5);
+    if (h < 0) h = 0;
+    topCache[x] = SEA - h * ISL.peak;
+  }
+}
+function topY(x) {
+  return (x < 0 || x >= VW) ? SEA + 4 : topCache[x];
+}
+
+// 灯塔几何。
+// 关键：所有 y 都由 base 向上偏移量推导，不再写死绝对值。
+// 原先 yTop/rodY 等是硬编码的绝对 y，竖屏加高 VH 后地平线下移，
+// 塔基会跟着下移而塔顶不动 → 塔被拉长变形。改为相对量后自动保持比例。
+const TOWER = {
+  base: 0,      // 由岛屿平台高度决定，构建时回填
+  hwB: 11, hwT: 7.5, deckHw: 15, lantHw: 9, roofHw: 12,
+  yTop: 54, deckY: 46, railY: 38,
+  lantY0: 24, lantY1: 46,
+  roofY0: 12, roofY1: 24,
+  rodY: 6,
+};
+const LAMPX = CX;
+let LAMPY = 35;                        // 灯室中心 —— 全场暖光源
+
+// 以「距塔基的向上偏移」重排塔身各部件，竖屏加高 VH 后自动保持比例。
+// 原始手调值（VH=270/SEA=168 时塔基落在 BASE_REF=121）换算成偏移量：
+//   偏移 = BASE_REF - 原绝对y，例如 yTop: 121 - 54 = 67。
+// 之前直接拿绝对 y 去减，塔顶直接跑到基部之上 54px 处 → 整座塔塌进地里。
+const BASE_REF = 121;
+const TOWER_OFF = (() => {
+  const a = { yTop:54, deckY:46, railY:38, lantY0:24, lantY1:46,
+              roofY0:12, roofY1:24, rodY:6 };
+  const o = {};
+  for (const k in a) o[k] = BASE_REF - a[k];
+  return o;
+})();
+function layoutTower() {
+  const b = TOWER.base;
+  // 取整：塔身内部依赖整数 y（红白环带 % 34、石缝 % 6、位运算 y>>2）
+  for (const k in TOWER_OFF) TOWER[k] = Math.round(b - TOWER_OFF[k]);
+  // 灯室中心：原设计在 railY(38) 与 lantY1(46) 之间，约 y=35，
+  // 换算成偏移为 BASE_REF - 35 = 86。
+  LAMPY = Math.round(b - (BASE_REF - 35));
+}
+
+function drawIsland() {
+  buildIslandProfile();
+  const baseY = topY(CX);
+  // 塔基必须取整。塔身里大量用到整数运算：
+  //   band = ((y + 46) % 34) < 13   （红白环带）
+  //   if (y % 6 === 0)               （石砌横缝）
+  //   ((x + (y>>2)) % 5)            （石缝）
+  // 一旦y 带小数，这些判断全部失效，塔会画成一片糊。
+  // 原代码 TOWER.yTop 是整数常量，也正是因为这一点。
+  TOWER.base = Math.round(baseY) + 2;
+  layoutTower();      // 塔基定了，按偏移量重排塔顶各部件
+
+  for (let x = ISL.cx - ISL.hw; x <= ISL.cx + ISL.hw; x++) {
+    if (x < 0 || x >= VW) continue;
+    const ty = topY(x);
+    if (ty >= SEA) continue;
+
+    // 坡度：左向面（向右下降）受光更多。冷光来自左上。
+    const slope = topY(x) - topY(x - 1);
+    const facing = Math.max(0, Math.min(1, 0.5 - slope * 0.22));
+
+    // 平台区域要压平，灯塔才站得稳
+    const plat = Math.exp(-Math.pow((x - ISL.cx) / 52, 2));
+
+    for (let y = Math.max(0, Math.floor(ty)); y < SEA; y++) {
+      const depth = (y - ty) / Math.max(1, SEA - ty);      // 0 顶 → 1 水线
+      const n1 = fbm(x*0.085, y*0.11 + 20);
+      const n2 = fbm(x*0.31, y*0.28 + 60);
+
+      // 基础明暗：顶部受天光，底部沉入阴影。
+      // 注意基部不能压到全黑 —— 岛体正好止于海平面，
+      // 一旦底部比水面还暗，地平线上就会出现一条硬黑线。
+      // 这里给基部留一个"反射天光"的底光。
+      const base = 0.30 + 0.55*(1 - depth) + 0.30*facing;
+      let l = base * (1 - depth*0.28) + depth * 0.13;   // 底光，不归零
+      // 层理：水平沉积纹，给岩石"地质感"
+      const strata = Math.sin(y*0.55 + n1*2.6) * 0.5 + 0.5;
+      l += (strata - 0.5) * 0.13;
+      // 颗粒
+      l += (n2 - 0.5) * 0.16;
+      // 平台压平处稍亮（人工修整的痕迹）
+      l += plat * 0.10 * (1 - depth);
+      // 湿区：水线附近略暗偏冷，但不能压死
+      const wet = Math.max(0, (depth - 0.74) / 0.26);
+
+      l = Math.max(0, Math.min(1, l));
+      ramp([ROCK_D, ROCK_M, ROCK_L], l, x, y, _c);
+      let r = _c[0], g = _c[1], b = _c[2];
+      // 湿岩：轻微压暗偏冷
+      r *= (1 - wet*0.22); g *= (1 - wet*0.20); b *= (1 - wet*0.10);
+      px(x, y, r, g, b);
+    }
+
+    // 水线处：岩石与海面交界的一圈亮边。
+    // 没有它，岛的底边就是一条生硬的切口；有了它才像"泡在水里"。
+    const wetTop = SEA - 1;
+    if (ty < wetTop) {
+      pxA(x, wetTop, hex(0x6d8296), 0.42);
+      pxA(x, wetTop - 1, hex(0x4a5c6e), 0.20);
+    }
+
+    // 顶缘冷色轮廓光 —— 把岩石从暗背景里"切"出来，画面立刻通透
+    const tyi = Math.floor(ty);
+    if (tyi >= 0 && tyi < SEA) {
+      const rimK = 0.30 + 0.45*facing;
+      pxA(x, tyi, ROCK_R, rimK);
+      pxA(x, tyi - 1, ROCK_R, rimK * 0.35);
+    }
+  }
+
+  // 岛下暗影：让岛屿"坐进"海里
+  for (let x = ISL.cx - ISL.hw; x <= ISL.cx + ISL.hw; x++) {
+    if (x < 0 || x >= VW) continue;
+    const ty = topY(x);
+    if (ty >= SEA) continue;
+    for (let y = Math.floor(ty); y < SEA; y++) {
+      const k = (y - ty) / Math.max(1, SEA - ty);
+      if (k > 0.35) continue;
+      const i = y*VW + x, d = buf[i];
+      const f = 1 - k / 0.35 * 0.20;
+      px(x, y, (d&255)*f, ((d>>8)&255)*f, ((d>>16)&255)*f);
+    }
+  }
+}
+
+function drawLighthouse() {
+  const T = TOWER;
+  const by = T.base;
+
+  // ── 基座：石砌台基
+  for (let y = by - 7; y < by + 3; y++) {
+    const hw = 17 - Math.max(0, (y - (by-7)) * 0.25);
+    for (let x = LAMPX - hw; x <= LAMPX + hw; x++) {
+      if (y < 0 || y >= VH) continue;
+      const d = (x - LAMPX) / hw;
+      const cyl = Math.sqrt(Math.max(0, 1 - d*d));
+      const n = fbm(x*0.4, y*0.4);
+      let l = 0.30 + 0.42*cyl + (n-0.5)*0.16;
+      if (((x + (y>>2)) % 5) === 0) l -= 0.10;       // 石缝
+      ramp([T_DARK, T_SHADE, T_WHITE], Math.max(0,Math.min(1,l)), x, y, _c);
+      px(x, y, _c[0], _c[1], _c[2]);
+    }
+  }
+
+  // ── 塔身：收分 + 柱面明暗 + 红白环带 + 暖光窗
+  for (let y = T.yTop; y <= by - 5; y++) {
+    const t = (by - 5 - y) / (by - 5 - T.yTop);        // 0 底 → 1 顶
+    const hw = T.hwB + (T.hwT - T.hwB) * t;
+    for (let x = Math.floor(LAMPX - hw); x <= LAMPX + hw; x++) {
+      if (x < 0 || x >= VW || y < 0 || y >= VH) continue;
+      const d = (x - LAMPX) / hw;
+      const cyl = Math.sqrt(Math.max(0, 1 - d*d));      // 柱面法线
+
+      // 红白环带：经典 lighthouse 涂装
+      const band = ((y + 46) % 34) < 13;
+      const base = band ? T_RED : T_WHITE;
+      const baseD = band ? T_RED_D : T_SHADE;
+
+      // 光照：灯笼在顶部，越往上越亮；柱面靠左受光
+      let l = 0.26 + 0.34*cyl + 0.30*t;
+      // 石砌横缝
+      if (y % 6 === 0) l -= 0.11;
+      // 竖向水渍/污痕
+      const stain = fbm(x*0.14, y*0.045 + 90);
+      l -= Math.max(0, stain - 0.62) * 0.30;
+      // 底部积污
+      l -= Math.max(0, (0.22 - t)) * 0.55;
+
+      l = Math.max(0, Math.min(1, l));
+      ramp([baseD, base], 0.30 + 0.70*l, x, y, _c);
+      px(x, y, _c[0], _c[1], _c[2]);
+    }
+  }
+
+  // ── 暖光窗：冷风暴里最重要的暖色锚点
+  const winY = [by - 20, by - 40, by - 60, by - 78];
+  for (let i = 0; i < winY.length; i++) {
+    const wy = winY[i];
+    if (wy <= T.yTop + 3) continue;
+    const wx = LAMPX + (i % 2 ? 4 : -4);
+    for (let dy = 0; dy < 5; dy++) {
+      for (let dx = 0; dx < 3; dx++) {
+        const edge = (dy === 0 || dy === 4 || dx === 0 || dx === 2);
+        px(wx + dx, wy + dy, edge ? hex(0x3a3128)[0] : (i%2?WARM_HI:WARM)[0],
+                              edge ? hex(0x3a3128)[1] : (i%2?WARM_HI:WARM)[1],
+                              edge ? hex(0x3a3128)[2] : (i%2?WARM_HI:WARM)[2]);
+      }
+    }
+  }
+
+  // ── 观景台挑檐
+  for (let y = T.deckY; y < T.deckY + 5; y++) {
+    const hw = T.deckHw + (y === T.deckY ? 1 : 0);
+    for (let x = LAMPX - hw; x <= LAMPX + hw; x++) {
+      if (x < 0 || x >= VW || y < 0 || y >= VH) continue;
+      const l = 0.34 + 0.34 * (1 - Math.abs(x-LAMPX)/hw);
+      ramp([METAL, T_SHADE, T_WHITE], l, x, y, _c);
+      px(x, y, _c[0], _c[1], _c[2]);
+    }
+  }
+  // 台下阴影
+  for (let x = LAMPX - T.deckHw; x <= LAMPX + T.deckHw; x++)
+    pxA(x, T.deckY + 5, [0,0,0], 0.35);
+
+  // ── 栏杆
+  for (let x = LAMPX - T.deckHw + 1; x <= LAMPX + T.deckHw - 1; x++) {
+    if ((x - LAMPX) % 3 === 0) {
+      for (let y = T.railY; y < T.deckY; y++) {
+        const l = 0.40 + 0.26*Math.sin((x-LAMPX)*0.5);
+        ramp([METAL, T_SHADE], l, x, y, _c);
+        px(x, y, _c[0], _c[1], _c[2]);
+      }
+    }
+  }
+  // 栏杆扶手
+  for (let x = LAMPX - T.deckHw; x <= LAMPX + T.deckHw; x++) {
+    const l = 0.52;
+    ramp([METAL, T_SHADE, T_WHITE], l, x, T.railY - 1, _c);
+    px(x, T.railY - 1, _c[0], _c[1], _c[2]);
+  }
+
+  // ── 灯室：玻璃格 + 内部光源
+  for (let y = T.lantY0; y < T.lantY1; y++) {
+    const t = (y - T.lantY0) / (T.lantY1 - T.lantY0);
+    const hw = T.lantHw - Math.round(t * 1.2);
+    for (let x = LAMPX - hw; x <= LAMPX + hw; x++) {
+      if (x < 0 || x >= VW || y < 0 || y >= VH) continue;
+      const dx = (x - LAMPX) / hw;
+      // 玻璃：靠近灯芯处亮，边缘暗
+      const core = Math.sqrt(Math.max(0, 1 - dx*dx)) * (1 - Math.abs(t-0.5)*1.1);
+      const n = fbm(x*0.5+5, y*0.5+5);
+      const l = Math.max(0, core*0.95 + (n-0.5)*0.10);
+      const c = l > 0.72 ? LAMP : (l > 0.45 ? WARM : WARM_HI);
+      px(x, y, c[0]*l + 6, c[1]*l + 6, c[2]*l + 5);
+    }
+  }
+  // 灯室竖向框架
+  for (const fxo of [-T.lantHw, -T.lantHw/2 | 0, 0, T.lantHw/2 | 0, T.lantHw]) {
+    for (let y = T.lantY0; y < T.lantY1; y++) {
+      const t = (y - T.lantY0) / (T.lantY1 - T.lantY0);
+      const hw = T.lantHw - Math.round(t * 1.2);
+      if (Math.abs(fxo) > hw) continue;
+      px(LAMPX + fxo, y, METAL[0], METAL[1], METAL[2]);
+    }
+  }
+  // 灯室上下环
+  for (let x = LAMPX - T.lantHw; x <= LAMPX + T.lantHw; x++) {
+    px(x, T.lantY0, METAL[0], METAL[1], METAL[2]);
+    px(x, T.lantY1 - 1, METAL[0], METAL[1], METAL[2]);
+  }
+
+  // ── 锥形屋顶
+  for (let y = T.roofY0; y <= T.roofY1; y++) {
+    const t = (y - T.roofY0) / (T.roofY1 - T.roofY0);
+    const hw = T.roofHw * (1 - t);
+    if (hw < 0.4) continue;
+    for (let x = LAMPX - hw; x <= LAMPX + hw; x++) {
+      if (x < 0 || x >= VW || y < 0 || y >= VH) continue;
+      const d = (x - LAMPX) / (hw + 0.001);
+      // 屋顶左受右暗，给出圆柱/圆锥的体积
+      let l = 0.62 - d * 0.34 + (fbm(x*0.6, y*0.6)-0.5)*0.10;
+      if (y === T.roofY1) l = 0.70;                     // 檐口亮边
+      ramp([METAL, T_DARK, T_WHITE], Math.max(0,Math.min(1,l)), x, y, _c);
+      px(x, y, _c[0], _c[1], _c[2]);
+    }
+  }
+  // 顶针
+  for (let y = T.rodY; y < T.roofY0; y++) {
+    px(LAMPX, y, T_DARK[0], T_DARK[1], T_DARK[2]);
+    if (y === T.rodY + 1) { px(LAMPX-1, y, T_DARK[0], T_DARK[1], T_DARK[2]);
+                           px(LAMPX+1, y, T_DARK[0], T_DARK[1], T_DARK[2]); }
+  }
+}
+
+// 静态层缓冲
+let statBuf = new Uint32Array(N);
+// 静态层覆盖掩码：1 = 该像素属于岛屿/灯塔，合成时必须压过环境层
+let statMask = new Uint8Array(N);
+function renderStatic() {
+  // 注意：drawIsland / drawLighthouse 内部通过 px() 写入全局 buf。
+  // 必须先让 buf 指向 statBuf，否则画完再赋值等于把成果丢掉。
+  const keep = buf;
+  buf = statBuf;
+  buf.fill(0);
+  drawIsland();
+  drawLighthouse();
+  buf = keep;
+  // 掩码只算一次
+  for (let i = 0; i < N; i++) statMask[i] = statBuf[i] !== 0 ? 1 : 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   动态层
+   ═══════════════════════════════════════════════════════════════ */
+
+// ── 1 天空 ─────────────────────────────────────────────────────
+const _c3 = [0,0,0];
+const GLOW_C = hex(0x5d7086);   // 地平线霞光色
+
+/**
+ * 天空颜色（纯函数，不写像素）。
+ * 抽出来的唯一原因：海面做"海天融合"时必须复用同一套数学，
+ * 否则两侧颜色对不上，会在地平线上方留下一条深色接缝。
+ * 写死一个常量只对某一行的渐变成立，上下几行立刻穿帮。
+ */
+function skyColorAt(x, y, out) {
+  // 按天空区（0..SEA）归一，不是整个 VH。
+  // 若用 y/VH，竖屏加高 VH 后天空区只占一部分，
+  // 地平线附近就再也到不了 SKY 色阶的最亮档 —— 天地交界会发暗。
+  const ty = y / SEA;
+  const base = Math.pow(Math.max(0, ty), 0.85);
+  const stormDip = Math.exp(-Math.pow((ty - 0.30) / 0.34, 2)) * 0.10;
+  const tt0 = Math.max(0, base - stormDip);
+  const tt = tt0 + (vnoise(x*0.012, y*0.05) - 0.5) * 0.012;
+  ramp(SKY, tt, x, y, out);
+  // 叠加地平线霞光
+  const gy = y - (SEA - 12);
+  if (gy > -16 && gy < 16) {
+    const k = (1 - Math.abs(gy) / 16) * (0.055 + 0.035 * (x / VW)) * 0.5;
+    out[0] += (GLOW_C[0] - out[0]) * k;
+    out[1] += (GLOW_C[1] - out[1]) * k;
+    out[2] += (GLOW_C[2] - out[2]) * k;
+  }
+  return out;
+}
+
+function drawSky(t) {
+  for (let y = 0; y < VH; y++) {
+    for (let x = 0; x < VW; x++) {
+      skyColorAt(x, y, _c);
+      px(x, y, _c[0], _c[1], _c[2]);
+    }
+  }
+  // 地平线霞光已并入 skyColorAt()，这里不再单独画一遍。
+  // 之前分开画会导致海面融合时拿到的是"未叠加霞光"的天色，
+  // 与实际天空不一致 —— 于是地平线上方出现一条深色接缝。
+}
+
+// ── 2 风暴云 ───────────────────────────────────────────────────
+// 团块状云朵密度场。每个云 = 若干重叠椭圆累积密度，
+// 密度决定是否成云、以及云底深浅。这样有蓬松体积，不是贴片。
+//
+// y 是「占天空区（0..SEA）的相对高度」，运行时再乘 SEA 换成绝对 y。
+// 竖屏加高 VH 后天空区变大，云会跟着拉开间距，不会全挤在顶部。
+const CLOUDS = [
+  // {yr, scale, speed, blobs:[dx,dy,r], dark}
+  { yr: 0.155, sc: 1.00, sp: 5.0, dark: 0.00, blobs: [
+      [0,0,34],[26,6,26],[54,2,30],[-24,7,24],[-52,3,22],
+      [80,8,20],[-78,5,18],[106,4,14] ] },
+  { yr: 0.310, sc: 0.74, sp: 8.5, dark: 0.28, blobs: [
+      [0,0,28],[30,5,22],[58,1,24],[-30,6,20],[-62,2,18],
+      [92,7,15] ] },
+  { yr: 0.464, sc: 0.50, sp: 13.0, dark: 0.55, blobs: [
+      [0,0,24],[28,4,18],[54,0,20],[-32,5,16],[-64,1,14],
+      [88,6,12],[116,2,10] ] },
+];
+
+function drawClouds(t) {
+  for (const cl of CLOUDS) {
+    const off = -((t * cl.sp) % 620);
+    const clY = cl.yr * SEA;          // 相对高度 → 绝对 y（每层只算一次）
+    for (let rep = 0; rep < 2; rep++) {
+      const baseX = off + rep * 620;
+      // 该层云的包围盒
+      let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+      for (const b of cl.blobs) {
+        const bx = baseX + b[0]*cl.sc, by = clY + b[1]*cl.sc, br = b[2]*cl.sc;
+        if (bx-br < minX) minX = bx-br;
+        if (bx+br > maxX) maxX = bx+br;
+        if (by-br < minY) minY = by-br;
+        if (by+br > maxY) maxY = by+br;
+      }
+      const x0 = Math.max(0, Math.floor(minX)), x1 = Math.min(VW-1, Math.ceil(maxX));
+      const y0 = Math.max(0, Math.floor(minY)), y1 = Math.min(VH-1, Math.ceil(maxY));
+      if (x1 < x0 || y1 < y0) continue;
+
+      for (let y = y0; y <= y1; y++) {
+        for (let x = x0; x <= x1; x++) {
+          // 累积密度
+          let dens = 0;
+          for (let k = 0; k < cl.blobs.length; k++) {
+            const b = cl.blobs[k];
+            const bx = baseX + b[0]*cl.sc, by = clY + b[1]*cl.sc, br = b[2]*cl.sc;
+            const dx = (x - bx) / br, dy = (y - by) / (br * 0.62);
+            const dd = dx*dx + dy*dy;
+            if (dd < 1) {
+              const f = 1 - dd;
+              // 边缘用噪声打碎，避免出现完美椭圆
+              const w = 0.72 + 0.28 * vnoise(x*0.19 + k*13, y*0.19);
+              dens += f * f * w;
+            }
+          }
+          if (dens < 0.20) continue;
+
+          // 云底暗、云顶亮：风暴云的体积感来自这里。
+          // vgrad 是「相对该层云上下界」的归一高度，用它做主光来源。
+          const vgrad = 1 - (y - minY) / Math.max(1, (maxY - minY));
+          // 主光：顶部受光，底部沉在阴影里
+          let l = 0.30 + 0.62 * Math.pow(vgrad, 1.35);
+          // 底面额外压暗，拉开云的"厚度"
+          l -= Math.pow(1 - vgrad, 2.2) * 0.34;
+          // 越远的层越沉（大气透视的反面：远云更暗更平）
+          l -= cl.dark * 0.22;
+          // 云隙透光：低频噪声制造明暗交错，避免整片死板
+          l += (vnoise(x*0.048, y*0.062 + t*0.05) - 0.5) * 0.30;
+          // 细颗粒：给云一点噪点质感，避免大面积平滑
+          l += (vnoise(x*0.31, y*0.29) - 0.5) * 0.07;
+          l = Math.max(0, Math.min(1, l));
+
+          // 冷灰蓝云阶：暗部偏蓝，亮部偏灰
+          const cc = cloudColor(l, cl.dark, x, y);
+          const thr = (BAYER[(y&3)*4 + (x&3)] + 0.5) / 16;
+          // 边缘抖动过渡（云的轮廓用抖动咬进背景，不是硬切）
+          if (dens < 0.38 && dens - 0.20 < 0.18 * (1 - thr)) continue;
+          px(x, y, cc[0], cc[1], cc[2]);
+        }
+      }
+    }
+  }
+}
+// 云色阶：冷灰蓝 → 顶部微亮。
+// 上限刻意不推到纯白 —— 风暴云的核心特征是「暗」，
+// 亮部只到冷灰蓝，靠灯塔暖光和闪电去打破它。
+const CLOUD_RAMP = [
+  hex(0x0c1119), hex(0x141b26), hex(0x1f2836), hex(0x2b3646),
+  hex(0x3a4757), hex(0x4b5a6c), hex(0x5e6f82),
+];
+function cloudColor(l, dark, x, y) {
+  ramp(CLOUD_RAMP, l * (1 - dark*0.35), x, y, _c2);
+  return _c2;
+}
+const _c2 = [0,0,0];
+
+// ── 3 远雨薄纱 ────────────────────────────────────────────────
+function drawFarRain(t) {
+  for (let y = 0; y < SEA; y++) {
+    // 越靠地平线雨幕越密（远处雨帘）
+    const dens = 0.10 + 0.16 * (1 - y / SEA);
+    for (let x = 0; x < VW; x++) {
+      // 斜向雨丝：细密斜线
+      const s = (x + y * 0.34) * 0.9 + t * 90;
+      const f = s - Math.floor(s);
+      if (f < 0.055 * dens * 3) {
+        pxA(x, y, hex(0x6b7f95), 0.10 * dens);
+      }
+    }
+  }
+}
+
+// ── 4 海面 ─────────────────────────────────────────────────────
+// 逐列计算波面高度：近处波大、远处被透视压扁。
+const WAVES = [
+  { a: 0.055, k: 0.021, sp: 0.62, ph: 0.0  },
+  { a: 0.030, k: 0.047, sp: 0.94, ph: 1.7  },
+  { a: 0.016, k: 0.093, sp: 1.48, ph: 3.1  },
+];
+function surfaceY(x, y, t) {
+  const d = (y - SEA) / (VH - SEA);          // 0 地平线 → 1 画面底
+  const persp = 0.16 + 0.84 * Math.pow(d, 0.72);   // 透视压缩
+  const amp = (1.1 + 9.5 * persp);
+  let s = 0, wsum = 0;
+  for (const w of WAVES) {
+    s += Math.sin(x * w.k + t * w.sp * 2.4 + w.ph) * w.a;
+    wsum += w.a;
+  }
+  return y - (s / wsum) * amp;
+}
+
+function drawOcean(t) {
+  for (let x = 0; x < VW; x++) {
+    // 找出该列的波面（从地平线往上扫，取第一个入水位置）
+    let sy = SEA;
+    for (let dy = -16; dy <= 2; dy++) {
+      const yy = SEA + dy;
+      if (yy < 0 || yy >= VH) continue;
+      if (surfaceY(x, yy, t) < yy - 0.35) { sy = yy; break; }
+    }
+    if (sy < SEA) sy = SEA;   // 不许越过平均海平面（避免淹没岛屿）
+
+    for (let y = sy; y < VH; y++) {
+      // ── 基础深度色阶 ──────────────────────────────────
+      // 注意：不能直接用 tt = d^p。d→0（地平线）时 tt→0 会取到
+      // SEA_RAMP 最浅的那档，与上一行天空形成 8 倍亮度跳变，
+      // 在天地交界处拉出一条生硬的白线。
+      // 正确做法：地平线处让水色「接近天空色」，后面用 smoothstep 做融合，
+      // 让海天之间是连续过渡而不是两个色块的接缝。
+      const dRaw = (y - SEA) / (VH - SEA);        // 0 地平线 → 1 画面底
+      const d = Math.max(0, dRaw);
+      const persp = 0.18 + 0.82 * Math.pow(d, 0.70);
+
+      // 水体本色（近处深、远处浅）
+      let tt = 0.30 + 0.70 * Math.pow(Math.max(0, d - 0.004) / (1 - 0.004), 0.55);
+
+      // ── 横向波浪条纹 ──────────────────────────────────
+      // 关键：海面不能只是垂直渐变。必须有横向的浪纹，
+      // 否则就是一块布。按「到波面的距离」衰减，越近越清晰。
+      // 但靠近地平线时行距已小于一个像素，条纹会挤压成一条白线，
+      // 所以要用 fade 把细节逐渐抹平，而不是硬切。
+      const above = y - sy;                       // 距波面
+      const nearFade = Math.max(0, Math.min(1, (d - 0.012) / 0.10)); // 地平线处淡出
+      const bands =
+        Math.sin((y * 0.85) - t * 1.6 + Math.sin(x*0.05 + t*0.7) * 1.9) * 0.5 + 0.5;
+      const fine =
+        Math.sin((y * 2.10) + x * 0.11 - t * 2.7) * 0.5 + 0.5;
+      // 浪纹只作用在靠近波面的若干行内
+      const bandMask = Math.max(0, 1 - above / (5 + 34 * persp)) * nearFade;
+      tt += (bands - 0.42) * 0.30 * bandMask * (0.35 + 0.65 * persp);
+      tt += (fine - 0.5) * 0.10 * bandMask * persp;
+
+      // ── 远处涌浪 ──────────────────────────────────────
+      // 只在波面附近画条纹，画面下半部分会空成一块布。
+      // 这里补一层贯穿全画面的低频涌浪：随距离增大而拉长、
+      // 幅度减小（透视），让近处有实际的"浪"在动。
+      //
+      // 关键：纯 sin 的条纹在等距下会变成"灯芯绒"—— 规则得刺眼。
+      // 必须用两个不同频率/相位的正弦相乘，让浪脊出现断续与错位，
+      // 再叠一层低频噪声打散，才像真实的涌浪。
+      const swellFreq = 0.30 - 0.19 * d;
+      const sA = Math.sin(y * swellFreq * 6.0
+                    + Math.sin(x*0.021 + t*0.33) * 2.6 - t * 0.85);
+      const sB = Math.sin(y * swellFreq * 2.3
+                    - Math.sin(x*0.047 - t*0.21) * 1.7 + t * 0.52);
+      // 相乘 → 产生不规则的浪脊间隔，而不是均匀条纹
+      const swell = (sA * 0.62 + sB * 0.38) * 0.5 + 0.5;
+      const swellMask = (0.16 + 0.42 * d) * nearFade;
+      tt += (swell - 0.46) * swellMask;
+      // 大尺度噪声：让某些区域完全没有浪（风的阵隙）
+      tt *= 0.82 + 0.30 * vnoise(x*0.016, y*0.010 + t*0.06);
+
+      // 大尺度色块扰动，打散规则的横向条带
+      tt += (vnoise(x*0.022, y*0.045) - 0.5) * 0.10;
+      tt += (vnoise(x*0.14, y*0.10) - 0.5) * 0.045;
+
+      tt = Math.max(0, Math.min(1, tt));
+      ramp(SEA_RAMP, tt, x, y, _c);
+      let r = _c[0], g = _c[1], b = _c[2];
+
+      // ── 海天融合 ──────────────────────────────────────
+      // 地平线附近把水色向「该行的天空色」靠拢，消除色块接缝。
+      // 这一步是"像不像电影"的分水岭：真实的海天交界是雾气，不是线。
+      //
+      // 关键：不能写死一个天空色常量。天空是垂直渐变 + 噪声，
+      // 写死的常量只对某一行成立，在它上下就会形成新的接缝
+      // （实测会在地平线上方留一条深色横线）。
+      // 正确做法：直接复用 drawSky 的渐变函数，保证两侧颜色严格同源。
+      const hz = Math.max(0, 1 - d / 0.075);
+      if (hz > 0) {
+        const hh = hz * hz * (3 - 2 * hz);          // smoothstep
+        skyColorAt(x, y - 1, _c3);                   // 取上一行（天空）的颜色
+        r += (_c3[0] - r) * hh;
+        g += (_c3[1] - g) * hh;
+        b += (_c3[2] - b) * hh;
+      }
+
+      // ── 破碎白帽 ────────────────────────────────────
+      // 浪峰白帽：既在近处波面，也在前景的大涌浪 crest 上。
+      // 前景没有白帽的话，海面下半部会缺少"动态"的读感。
+      const capBand = (y - sy) < 1.2 + 5.5 * persp;
+      const capNoise = vnoise(x*0.20 + t*1.9, y*0.52) * 0.6
+                     + vnoise(x*0.55, y*0.30 + t*2.6) * 0.4;
+      if (capBand && bands > 0.52 && capNoise > 0.56 + 0.16 * (1 - d)) {
+        const k = (0.34 + 0.40 * d) * nearFade;
+        r += (FOAM[0]-r)*k; g += (FOAM[1]-g)*k; b += (FOAM[2]-b)*k;
+      }
+      // 前景涌浪的稀疏白沫：只在浪峰高处、且噪声允许时出现
+      if (d > 0.22 && swell > 0.80 && vnoise(x*0.13, y*0.19 + t*1.1) > 0.62) {
+        const k = 0.13 * (d - 0.22) / 0.78;
+        r += (FOAM[0]-r)*k; g += (FOAM[1]-g)*k; b += (FOAM[2]-b)*k;
+      }
+      // 波面亮边：只在浪峰处出现。
+      // 若整行都加亮，会在天地交界处拉出一条笔直的白线——非常刺眼。
+      if (y === sy && bands > 0.60) {
+        const k = (0.20 + 0.30 * (bands - 0.60) / 0.40) * (1 - hz * 0.85);
+        r += (FOAM2[0]-r)*k; g += (FOAM2[1]-g)*k; b += (FOAM2[2]-b)*k;
+      }
+
+      px(x, y, r, g, b);
+    }
+  }
+}
+
+// ── 5 岸线泡沫 + 飞沫 ──────────────────────────────────────────
+// 泡沫沿岛缘分布，随涌浪相位胀缩；浪峰越线时抛洒 spray。
+const spray = [];
+let lastCrash = 0;
+
+function shoreMask(x) {                  // 该列是否临岛
+  return x >= ISL.cx - ISL.hw - 4 && x <= ISL.cx + ISL.hw + 4 && topY(x) < SEA + 2;
+}
+
+function drawShore(t) {
+  // 泡沫带：贴岛缘的一圈亮边。
+  // 关键：edge 必须跟着「岩石轮廓」走，不能用 max(ty, sy)。
+  // 当 ty > SEA（岛体边缘沉到海平面以下）时 max() 会返回 SEA，
+  // 于是整段海岸的泡沫被钉在同一条水平线上 —— 看起来像一道栅栏，
+  // 而不是浪。正确做法：泡沫只出现在岛体与海面「真实相交」的列，
+  // 且厚度要有强噪声打碎，避免出现连续不断的亮线。
+  for (let x = ISL.cx - ISL.hw - 6; x <= ISL.cx + ISL.hw + 6; x++) {
+    if (x < 0 || x >= VW) continue;
+    const ty = topY(x);
+
+    // 该列当前的波面
+    let sy = SEA;
+    for (let dy = -12; dy <= 3; dy++) {
+      const yy = SEA + dy;
+      if (yy < 0) continue;
+      if (surfaceY(x, yy, t) < yy - 0.35) { sy = yy; break;    }
+    }
+
+    // ── 岛体与海面相交判定 ──
+    // 只有「岛顶在水面上方」且「波面在岛顶下方」的列，才算岸线。
+    // 这样泡沫自然沿岛缘分布，不会横贯全屏。
+    const shoreY = ty;                        // 岩石轮廓线
+    const waterY = sy;                        // 波面
+    const isShore = ty < waterY;              // 岩石在水面之下延伸 → 岸
+    const distToWater = waterY - shoreY;
+
+    // 泡沫厚度：多频率叠加 + 强噪声打散
+    const b1 = 0.5 + 0.5*Math.sin(x*0.09 + t*1.5);
+    const b2 = 0.5 + 0.5*Math.sin(x*0.23 - t*2.2 + 1.1);
+    const b3 = 0.5 + 0.5*Math.sin(x*0.41 + t*3.1 + 2.7);
+    let thick = 1.0 + 3.6 * (b1*0.5 + b2*0.32 + b3*0.18);
+    // 关键：大尺度噪声把泡沫打断成一段一段，绝不允许连成一条线
+    const gap = vnoise(x*0.11, t*0.35);
+    if (gap < 0.34) thick = 0;                  // 缺口：这段没有泡沫
+    else if (gap < 0.46) thick *= 0.35;          // 边缘：稀疏碎沫
+    // 离岛心越远，泡沫越弱（岛两侧的远端衰减）
+    const away = Math.abs(x - ISL.cx) / ISL.hw;
+    thick *= Math.max(0, 1 - Math.pow(away, 2.2) * 0.92);
+
+    if (thick > 0.4) {
+      const edge = waterY;
+      for (let k = 0; k < thick; k++) {
+        const y = edge - 1 + k;
+        if (y < 0 || y >= VH) continue;
+        // 顶部最亮，向下迅速衰减成碎沫
+        let a = (1 - k / thick);
+        a = a * a * (0.45 + 0.55 * vnoise(x*0.42, y*0.42 + t*2));
+        if (a < 0.08) continue;
+        const c = k < thick*0.4 ? FOAM2 : FOAM;
+        pxA(x, y, c, a * 0.80);
+      }
+    }
+
+    // 越线喷发：波峰够高且相位吻合时抛射飞沫
+    const surge = b1 * 0.6 + b3 * 0.4;
+    if (isShore && surge > 0.93 && t - lastCrash > 0.055) {
+      lastCrash = t;
+      const dir = x < CX ? -1 : 1;
+      const cnt = 2 + ((Math.sin(x*7.7) * 0.5 + 0.5) * 3 | 0);
+      for (let i = 0; i < cnt; i++) {
+        spray.push({
+          x: x + dir * (Math.random()*3 - 1.5),
+          y: waterY - 1,
+          vx: dir * (5 + Math.random()*17) + (Math.random()-0.5)*7,
+          vy: -(16 + Math.random()*30),
+          life: 1,
+          decay: 0.85 + Math.random()*0.75,
+          size: Math.random() < 0.28 ? 2 : 1,
+        });
+      }
+    }
+  }
+
+  // 飞沫更新
+  for (let i = spray.length - 1; i >= 0; i--) {
+    const p = spray[i];
+    p.x += p.vx * 0.016;
+    p.y += p.vy * 0.016;
+    p.vy += 62 * 0.016;                   // 重力
+    p.vx *= 0.995;
+    p.life -= p.decay * 0.016;
+    if (p.life <= 0 || p.y >= VH) { spray.splice(i, 1); continue; }
+    const a = Math.min(1, p.life * 1.5);
+    if (p.size === 2) {
+      pxA(p.x|0, p.y|0, FOAM2, a*0.9);
+      pxA((p.x|0)+1, p.y|0, FOAM, a*0.55);
+    } else {
+      pxA(p.x|0, p.y|0, FOAM2, a*0.8);
+    }
+  }
+  if (spray.length > 460) spray.splice(0, spray.length - 460);
+}
+
+// ── 6 近景斜雨 ─────────────────────────────────────────────────
+const RAIN_N = 300;
+const rain = new Float32Array(RAIN_N * 4);   // x,y,len,speed
+let rainInit = false;
+function drawRain(t, dt) {
+  if (!rainInit) {
+    for (let i = 0; i < RAIN_N; i++) {
+      rain[i*4+0] = Math.random() * (VW + 120) - 60;
+      rain[i*4+1] = Math.random() * VH;
+      rain[i*4+2] = 3 + Math.random()*9;       // 长度
+      rain[i*4+3] = 260 + Math.random()*420;  // 速度
+    }
+    rainInit = true;
+  }
+  const wind = 0.42;    // 斜率：向右下倾
+  for (let i = 0; i < RAIN_N; i++) {
+    const o = i*4;
+    rain[o+0] += rain[o+3] * dt * wind;
+    rain[o+1] += rain[o+3] * dt;
+    if (rain[o+1] > VH + 10) {
+      rain[o+1] = -8 - Math.random()*24;
+      rain[o+0] = Math.random() * (VW + 160) - 80;
+    }
+    if (rain[o+0] > VW + 60) rain[o+0] -= (VW + 120);
+
+    const x0 = rain[o+0], y0 = rain[o+1], L = rain[o+2];
+    // 分层：近雨粗亮，远雨细淡（这里靠长度与 alpha 拉开）
+    const near = L > 8.5;
+    const a = near ? 0.30 : 0.16;
+    for (let k = 0; k < L; k++) {
+      const x = x0 - k * wind, y = y0 - k;
+      if (x < 0 || x >= VW || y < 0 || y >= VH) continue;
+      // 头部亮、尾部淡
+      const kk = 1 - k / L;
+      pxA(x|0, y|0, RAIN_C, a * kk * kk);
+    }
+  }
+}
+
+// ── 7 灯光：辉光 / 旋转光束 / 闪电 ────────────────────────────
+const BEAM_LEN = 250;
+const BEAM_PERIOD = 12;      // 光束转一圈的秒数
+
+function drawLampGlow(t) {
+  // 灯室核心：向外多层柔和辉光（加法）
+  for (let r = 26; r >= 1; r -= 1) {
+    const k = Math.pow(1 - r/26, 2.4) * 0.10;
+    const c = r > 12 ? BEAM_C : LAMP;
+    for (let a = 0; a < 22; a++) {
+      const th = a / 22 * Math.PI * 2;
+      for (let rr = r; rr < r+1.2; rr++) {
+        addC(LAMPX + Math.cos(th)*rr*1.25, LAMPY + Math.sin(th)*rr*0.9, c, k);
+      }
+    }
+  }
+  // 极亮灯芯
+  for (let y = -2; y <= 2; y++)
+    for (let x = -3; x <= 3; x++)
+      addC(LAMPX + x, LAMPY + y, LAMP_HI, 0.55);
+}
+
+// 光束：绕垂直轴旋转，投影到屏幕需做透视缩短
+// 关键：这是画面的主角之一，必须"看得见"但不能糊成一片白。
+// 做法是三段式：核心亮线 + 体积光锥 + 远端衰减，
+// 并用纵向条纹模拟雨雾介质里的光轴。
+function addBeam(ox, oy, ang, len, power, halfTan, t) {
+  const dx = Math.cos(ang), dy = Math.sin(ang);
+  const bx0 = Math.max(0, Math.floor(ox - len) - 4);
+  const bx1 = Math.min(VW-1, Math.ceil(ox + len) + 4);
+  const by0 = Math.max(0, Math.floor(oy - len*halfTan) - 8);
+  const by1 = Math.min(VH-1, Math.ceil(oy + len*halfTan) + 8);
+  for (let y = by0; y <= by1; y++) {
+    for (let x = bx0; x <= bx1; x++) {
+      const vx = x - ox, vy = y - oy;
+      const along = vx*dx + vy*dy;
+      if (along <= 0 || along >= len) continue;
+      const perp = -vx*dy + vy*dx;
+      const ap = Math.abs(perp);
+      // 锥体：越远越宽
+      const w = along * halfTan;
+      if (ap > w) continue;
+
+      // 横向分布：中心亮、边缘软。指数 2.2 让光锥有"硬芯软边"的光学感。
+      const u = ap / (w + 0.001);          // 0 中心 → 1 边缘
+      let f = Math.pow(1 - u, 2.2);
+
+      // 纵向衰减：近端强、远端弱，但不能用平方（会瞬间消失）
+      const alongK = 1 - 0.55 * (along / len);
+      f *= alongK;
+
+      // 体积条纹：雨雾介质中的光轴，比纯色三角耐看得多
+      const streak = 0.78 + 0.22 * Math.sin(along*0.13 + t*1.05)
+                          * Math.sin(along*0.041 - t*0.68);
+      f *= streak;
+
+      if (f < 0.002) continue;
+      addC(x, y, BEAM_C, f * power);
+
+      // ── 亮芯 ──────────────────────────────────────
+      // 真实灯塔光束中心有一道明显更亮的轴线。
+      // 只靠锥体渐变会显得"雾蒙蒙"，缺了这道芯就不像探照灯。
+      const coreW = along * 0.035 + 1.0;
+      if (ap < coreW) {
+        const cf = Math.pow(1 - ap / coreW, 1.5) * (1 - 0.35 * along/len);
+        addC(x, y, LAMP_HI, cf * power * 0.85);
+      }
+    }
+  }
+  // 灯芯附近的"光爆"：光束起点最亮
+  const burst = 22;
+  for (let y = -burst; y <= burst; y++) {
+    for (let x = -burst; x <= burst; x++) {
+      const along = x*dx + y*dy;
+      if (along < 0 || along > burst*1.8) continue;
+      const perp = Math.abs(-x*dy + y*dx);
+      if (perp > along * halfTan * 1.3 + 2) continue;
+      const f = Math.pow(1 - along/(burst*1.8), 2.6) * 0.24;
+      if (f < 0.004) continue;
+      addC(ox + x, oy + y, LAMP, f);
+    }
+  }
+}
+
+function drawBeam(t) {
+  // 光束角度必须是时间的纯函数，不能用累加器。
+  // 原因：① 累加器依赖 dt，掉帧/跳时会漂移；
+  //       ② 外部 setTime() 无法定位光束，回归截图就没法覆盖不同朝向。
+  // 一圈12 秒 —— 真实灯塔透镜转速大致就是这个量级。
+  const a = (t / BEAM_PERIOD) * Math.PI * 2;
+
+  // 双光束（真实灯塔多为两组透镜，相隔 180°）
+  for (const base of [a, a + Math.PI]) {
+    const sx = Math.sin(base);
+    const sz = Math.cos(base);
+    // 屏幕水平分量；正对镜头时(|sx|小)缩短
+    const projLen = BEAM_LEN * Math.abs(sx);
+    if (projLen < 8) {
+      // 正对/背对镜头：转为强烈的球状辉光（"被光扫过"的感觉）
+      const glow = Math.pow(Math.abs(sz), 2.0);
+      const gr = 40 + 70*Math.abs(sz);
+      for (let y = -gr; y <= gr; y += 1) {
+        for (let x = -gr*1.4; x <= gr*1.4; x += 1) {
+          const d = Math.sqrt(x*x*0.5 + y*y);
+          if (d > gr) continue;
+          const f = Math.pow(1 - d/gr, 2.6) * glow * 0.10;
+          if (f < 0.003) continue;
+          addC(LAMPX + x, LAMPY + y, BEAM_C, f);
+        }
+      }
+      continue;
+    }
+    // 光束略微下倾（照向海面）。
+    // 关键：两束的倾角必须相反（水平镜像），否则看起来像同一束。
+    // dir=+1 向右射，倾角向下；dir=-1 向左射，同样向下（不是向上）。
+    const dir = sx >= 0 ? 1 : -1;
+    // 屏幕角度：向右为 0.15rad 向下；向左为 PI-0.15rad（等价于向下）
+    const ang = dir > 0 ? 0.15 : Math.PI - 0.15;
+    // 锥角要够宽（约 12°半角）才有"光柱"体积感；
+    // power 是加法强度，在夜空背景上必须给足，否则等于没画。
+    addBeam(LAMPX, LAMPY, ang, projLen, 0.30, 0.21, t);
+  }
+}
+
+// ── 闪电 ───────────────────────────────────────────────────────
+let boltPts = null, branchPts = [];
+let flash = 0, nextBolt = 2.2, boltT = 99;
+const flick = [];   // 多脉冲包络
+
+/**
+ * 中点位移法生成折线。
+ * 关键：每一轮必须保证 pts 的相邻点都是「本轮已细分的」，
+ * 否则位移量会跨轮累积，路径会自我交叠成乱麻（实测过）。
+ * 正确写法：out = [pts[0]]，然后对每个 (a,b) push 中点 和 b —— 且 b 取自本轮 pts。
+ * 这本身就是正确的；真正的问题是 disp 衰减太慢 + 起点终点跨度过大，
+ * 导致主干横穿整个画面。竖直闪电的横向跨度必须远小于纵向。
+ */
+function makeBolt(x0, y0, x1, y1, depth, disp) {
+  let pts = [[x0,y0],[x1,y1]];
+  let d0 = disp;
+  for (let d = 0; d < depth; d++) {
+    const out = [pts[0]];
+    for (let i = 0; i < pts.length-1; i++) {
+      const a = pts[i], b = pts[i+1];
+      const mx = (a[0]+b[0])/2, my = (a[1]+b[1])/2;
+      const nx = -(b[1]-a[1]), ny = (b[0]-a[0]);
+      const L = Math.hypot(nx,ny) || 1;
+      // 位移按段长缩放，并强制横向分量更小 —— 闪电是竖直的
+      const off = (Math.random()-0.5) * d0;
+      out.push([mx + nx/L*off*0.45, my + ny/L*off], b);
+    }
+    pts = out;
+    d0 *= 0.52;
+  }
+  return pts;
+}
+
+function triggerBolt() {
+  // ── 主干：从云底竖直向下落到海面附近 ──
+  // 横向跨度必须小（≤26px），否则不像闪电像树枝
+  const x0 = 60 + Math.random() * (VW - 120);
+  // 起点锚定天空区顶部（云底附近），竖屏加高天空时才不会从画面正中劈下来
+  const yTop = SEA * 0.06 + Math.random() * SEA * 0.11;
+  const yEnd = SEA - 10 - Math.random() * 22;
+  const x1 = x0 + (Math.random() - 0.5) * 26;
+  boltPts = makeBolt(x0, yTop, x1, yEnd, 5, 16);
+
+  // ── 分支 ──
+  // 必须从主干「中段」生出，且向下、向外，不能水平乱甩
+  branchPts = [];
+  const nb = 2 + (Math.random() * 3 | 0);
+  const lo = 3, hi = Math.max(4, boltPts.length - 6);
+  for (let i = 0; i < nb; i++) {
+    const idx = lo + Math.random() * (hi - lo) | 0;
+    const a = boltPts[idx];
+    if (!a) continue;
+    // 分支长度明显短于主干，方向以向下为主
+    const bl = 16 + Math.random() * 26;
+    const dir = Math.random() < 0.5 ? -1 : 1;
+    branchPts.push(makeBolt(
+      a[0], a[1],
+      a[0] + dir * bl * (0.35 + Math.random() * 0.5),
+      a[1] + bl,
+      3, 7));
+  }
+
+  // ── 多脉冲：真实闪电不是一次亮完，而是频闪 2~3 下 ──
+  flick.length = 0;
+  const n = 2 + (Math.random() * 2 | 0);
+  let at = 0;
+  for (let i = 0; i < n; i++) {
+    at += i === 0 ? 0 : 0.055 + Math.random() * 0.075;
+    flick.push({ at, amp: (i === 0 ? 1 : 0.45 + Math.random() * 0.45),
+                 dec: 9 + Math.random() * 11 });
+  }
+  boltT = 0;
+  flash = 0;
+}
+
+function drawLightning(t, dt) {
+  nextBolt -= dt;
+  if (nextBolt <= 0) {
+    triggerBolt();
+    nextBolt = 3.4 + Math.random()*6.2;    // 3.4~9.6 秒一次
+  }
+  if (boltPts) {
+    boltT += dt;
+    // 脉冲包络
+    let env = 0;
+    for (const f of flick) {
+      const d = boltT - f.at;
+      if (d < 0) continue;
+      env = Math.max(env, f.amp * Math.exp(-d * f.dec));
+    }
+    flash = env;
+    if (boltT > 0.75) { boltPts = null; branchPts = []; flash = 0; }
+  } else {
+    flash *= Math.pow(0.02, dt);           // 余辉快速熄灭
+    if (flash < 0.004) flash = 0;
+  }
+
+  if (flash <= 0.004) return;
+
+  // ① 全场冷色补光：闪电照亮整个场景（用户明确要求）
+  const f = flash;
+  for (let y = 0; y < VH; y++) {
+    // 越靠近闪电越亮（垂直衰减）
+    const att = 0.55 + 0.45 * (1 - y / VH);
+    for (let x = 0; x < VW; x++) {
+      addPx(x, y, BOLT_C[0]*f*0.085*att, BOLT_C[1]*f*0.095*att, BOLT_C[2]*f*0.125*att);
+    }
+  }
+
+  // ② 云层内部被照亮：闪电的光在云里散射
+  //    （在云层高度加一层不均匀的冷光）
+  for (let y = 0; y < 96; y++) {
+    for (let x = 0; x < VW; x++) {
+      const nz = vnoise(x*0.035, y*0.05);
+      const k = f * 0.10 * nz * (1 - y/110);
+      if (k < 0.004) continue;
+      addPx(x, y, BOLT_C[0]*k, BOLT_C[1]*k, BOLT_C[2]*k*1.15);
+    }
+  }
+
+  // ③ 闪电本体：主干 + 分支
+  // 真实闪电是1~2px 的细丝，外加一层柔和辉光。
+  // 之前用 w=2 的方形块叠加，糊成了一条粗白带，反而失去锐度。
+  if (boltPts) {
+    const drawPts = (pts, w, k) => {
+      for (let i = 0; i < pts.length-1; i++) {
+        const a = pts[i], b = pts[i+1];
+        const steps = Math.max(2, Math.hypot(b[0]-a[0], b[1]-a[1])|0);
+        for (let s = 0; s <= steps; s++) {
+          const tt = s/steps;
+          const x = (a[0] + (b[0]-a[0])*tt) | 0;
+          const y = (a[1] + (b[1]-a[1])*tt) | 0;
+          // 辉光：外圈弱衰减，只为把主干从背景里托出来
+          if (w > 0) {
+            for (let d = -w; d <= w; d++) {
+              const g = k * 0.16 * (1 - Math.abs(d)/(w+1));
+              addPx(x, y + d, BOLT_C[0]*g, BOLT_C[1]*g, BOLT_C[2]*g);
+            }
+          }
+          // 芯：接近纯白的高亮细线
+          addPx(x, y, 255*k*0.92, 255*k*0.95, 255*k);
+        }
+      }
+    };
+    drawPts(boltPts, 2, f * 0.90);
+    for (const b of branchPts) drawPts(b, 1, f * 0.50);
+  }
+}
+
+// ── 8 后期：暗角 + 分级 ────────────────────────────────────────
+// 预计算暗角权重（椭圆距离），逐帧只做乘法
+let vig = new Float32Array(N);
+// 暗角是按 VH 预计算的，VH 变化后必须重算，否则椭圆中心与半径会错位。
+function buildVignette() {
+  const cx = VW*0.5, cy = VH*0.52;
+  for (let y = 0; y < VH; y++)
+    for (let x = 0; x < VW; x++) {
+      const dx = (x-cx)/(VW*0.62), dy = (y-cy)/(VH*0.66);
+      const d = Math.sqrt(dx*dx + dy*dy);
+      vig[y*VW+x] = 1 - Math.max(0, (d-0.52)/0.72) * 0.62;
+    }
+}
+buildVignette();
+
+function grade(t) {
+  // 冷暗部 / 暖亮部分级 + 暗角
+  for (let y = 0; y < VH; y++) {
+    for (let x = 0; x < VW; x++) {
+      const i = y*VW + x, d = buf[i];
+      let r = d & 255, g = (d>>8)&255, b = (d>>16)&255;
+
+      // 暗角（先乘，保留层次）
+      const v = vig[i];
+      r *= v; g *= v; b *= v;
+
+      // 分级：暗部压向蓝青，亮部推暖。
+      // 关键：分级必须是「相对当前像素」的微调，且最后要 clamp。
+      // 若对未绘制的纯黑像素做加法，会凭空造出蓝白噪点。
+      const lum = (r*0.299 + g*0.587 + b*0.114) / 255;
+      if (lum > 0.001) {                       // 只处理已绘制区域
+        const shadow = Math.pow(1 - lum, 2.2);
+        r -= shadow * 5; g -= shadow * 1; b += shadow * 11;
+        const high = Math.pow(lum, 2.0);
+        r += high * 12; g += high * 5; b -= high * 6;
+      }
+
+      // px 内部按位或无法承载负值/超255，必须显式夹紧
+      px(x, y, r<0?0:r>255?255:r, g<0?0:g>255?255:g, b<0?0:b>255?255:b);
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   主流程
+   ═══════════════════════════════════════════════════════════════ */
+let T = 0, lastMs = 0, fpsAcc = 0, fpsN = 0, fps = 0;
+let ready = false;
+
+function frame(ms) {
+  requestAnimationFrame(frame);
+  if (!lastMs) { lastMs = ms; return; }
+  let dt = (ms - lastMs) / 1000;
+  lastMs = ms;
+  if (dt > 0.05) dt = 0.05;                 // 掉帧保护
+  if (dt <= 0) dt = 0.016;
+  T += dt;
+
+  fpsAcc += dt; fpsN++;
+  if (fpsAcc > 0.5) { fps = fpsN/fpsAcc; fpsAcc = 0; fpsN = 0; }
+
+  render(T, dt);
+
+  // ── 上屏：整数倍最近邻放大（绝不开平滑，像素必须锐利）──
+  // 注意 drawImage 的 9 参形式：前 4 参是「源矩形」，后 4 参是「目标矩形」。
+  // 源矩形必须正好是内部缓冲 VH/VW 全尺寸。之前误写成 VW*cropS，
+  // 源被当成放大后的尺寸去采样，越界后按规范被钳回并同比缩小目标，
+  // 结果画布上只剩左上角一小块有像素 —— 表现为「竖屏全黑」。
+  offCtx.putImageData(imgData, 0, 0);
+  viewCtx.imageSmoothingEnabled = false;
+  viewCtx.drawImage(offCv, 0, 0, VW, VH, cropX, cropY, VW * cropS, VH * cropS);
+}
+
+function render(t, dt) {
+  buf.fill(0);
+
+  // 注意：px() 是「覆盖」而非「混合」。天空/云/海用 px() 逐像素铺满全屏，
+  // 所以岛屿灯塔不能先blit 进来（会被整体抹掉），必须放在环境层之后画。
+  drawSky(t);
+  drawClouds(t);
+  drawFarRain(t);
+  drawOcean(t);
+
+  // 静态层合成：只覆盖"非黑像素"，其余透出已画好的天空与海面。
+  // statMask 预计算一次，避免每帧做 13 万次分支判断。
+  for (let i = 0; i < N; i++) {
+    if (statMask[i]) buf[i] = statBuf[i];
+  }
+
+  drawShore(t);
+  drawRain(t, dt);
+  drawLampGlow(t);
+  drawBeam(t);
+  drawLightning(t, dt);
+  grade(t);
+
+  // 像素缓冲 → ImageData
+  const out = new Uint32Array(imgData.data.buffer);
+  out.set(buf);
+
+  if (!ready) { ready = true; window.__ready = true; }
+}
+
+// ── 尺寸自适应 ──────────────────────────────────────────────────
+// 核心思路：**先让内部缓冲贴合视口宽高比，再做整数倍放大**。
+//
+// 为什么不能直接 cover 裁切：横向构图是手调的（岛屿252px 宽、光束横扫 250px、
+// 闪电落差 123px）。竖屏 390×844 下 cover 要把 480×270 放大 7倍，
+// 480 宽里只剩约 130px 可见 —— 灯塔还在，但光束、闪电、海面纵深全被裁成一条。
+// 所以竖屏改为「把内部缓冲加高」：VW 保持 480（构图不动），
+// VH 按视口比例增加，多出来的空间补天空和海面。地平线锚在 SEA_R这个相对高度，
+// 所以岛和塔会自然落在合适位置，不是硬贴。
+//
+// 约束：VH 必须落在 [VH_MIN, VH_MAX]。
+// 上限是性能红线，不是构图选择：内部缓冲是纯软件逐像素渲染，
+// 成本与 VH×VW 近似线性（渲染 + putImageData + drawImage 三段）。
+// 无头 Chromium 实测（1440×810 桌面为参照）：
+//   VH=272 → 内部 13.1 万像素，桌面 ~52fps
+//   VH=400 → 内部 19.2 万像素，竖屏 ~30fps
+//   VH=560 → 内部 26.9 万像素，竖屏 ~24fps（明显卡）
+// 竖屏宁可上下裁掉一点海面（cover 仍保证横向 480px 完整），
+// 也不能让帧率掉到 24 —— 动画卡顿比构图不完美更致命。
+const VH_MIN = 180, VH_MAX = 400;
+
+function resize() {
+  const availW = Math.max(1, window.innerWidth);
+  const availH = Math.max(1, window.innerHeight);
+
+  // ① 按视口宽高比反推需要的内部高度，并吸附到 4 的倍数（Bayer 抖动是 4×4）
+  const wantVH = Math.round(VW * availH / availW);
+  const snapped = Math.max(VH_MIN, Math.min(VH_MAX, wantVH));
+  const newVH = Math.max(VH_MIN, Math.min(VH_MAX, Math.round(snapped / 4) * 4));
+
+  if (newVH !== VH) {
+    VH = newVH;
+    SEA = Math.round(VH * SEA_R);
+    // offCv 是 putImageData 的目标，尺寸必须跟着 VH 变，
+    // 否则超出部分被静默截断，画面下半截会是空的。
+    // 顺序要紧：先定 offCv 尺寸，再分配依赖它的 imgData。
+    if (offCv) { offCv.width = VW; offCv.height = VH; }
+    allocBuffers();
+    renderStatic();          // 岛屿轮廓依赖 SEA，必须重算
+  }
+
+  // ② 画布尺寸 = 视口尺寸 × dpr。
+  //
+  // 这里曾踩过一个坑：先把内部缓冲按 cover 取整放大、再乘 dpr 得到画布尺寸。
+  // 竖屏 390×844 下算出的画布是 1920×1520 —— 比视口大 4 倍多，
+  // 每帧 drawImage 要放大填充 290 万像素，帧率直接掉到 28。
+  // 画布只需覆盖「视口」即可：超出视口的部分反正被 CSS overflow 裁掉，
+  // 画那么大纯属浪费填充率。
+  const dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+  const pw = Math.max(VW, Math.round(availW * dpr));
+  const ph = Math.max(VH, Math.round(availH * dpr));
+  viewCv.width = pw;
+  viewCv.height = ph;
+  // CSS 尺寸就是视口尺寸（画布铺满，overflow 隐藏多余部分）
+  viewCv.style.width = availW + 'px';
+  viewCv.style.height = availH + 'px';
+
+  // 居中裁切：把内部缓冲按 cover 比例放大后居中放进画布。
+  // cropS 取宽高两者的较大值 —— 只按宽度算会算出过小的缩放比，
+  // 目标矩形比画布窄，右侧/底部留出未绘制的黑边。
+  // cropX/cropY 允许为负：负值表示内容溢出画布，由 CSS 的 overflow 裁掉，
+  // 这正是「画面铺满视口」要的居中裁切。
+  cropS = Math.max(pw / VW, ph / VH);
+  cropX = (pw - VW * cropS) / 2;
+  cropY = (ph - VH * cropS) / 2;
+}
+
+function init() {
+  viewCv = document.getElementById('cv');
+  viewCtx = viewCv.getContext('2d', { alpha:false });
+  viewCtx.imageSmoothingEnabled = false;
+
+  offCv = document.createElement('canvas');
+  offCv.width = VW; offCv.height = VH;
+  offCtx = offCv.getContext('2d', { alpha:false, willReadFrequently:true });
+  imgData = offCtx.createImageData(VW, VH);
+
+  renderStatic();
+
+  resize();
+  window.addEventListener('resize', resize);
+
+  // H 键隐藏片名（录屏用）
+  const plate = document.getElementById('plate');
+  window.addEventListener('keydown', e => {
+    if (e.key === 'h' || e.key === 'H') plate.classList.toggle('hide');
+  });
+
+  // 调试钩子（无头验证用）
+  window.__scene = {
+    get fps(){ return fps; },
+    get time(){ return T; },
+    get sprayCount(){ return spray.length; },
+    get flash(){ return flash; },
+    // VH/SEA 会随视口自适应变化，必须用 getter，
+    // 否则调试钩子会一直返回模块加载时的旧值。
+    get VW(){ return VW; }, get VH(){ return VH; },
+    get SEA(){ return SEA; }, get LAMPY(){ return LAMPY; },
+    CX, LAMPX,
+    // 塔身 y 范围。校验脚本要按「塔身的实际位置」取样，
+    // 不能写死行号 —— VH 自适应后塔整体会上下平移。
+    get towerTop(){ return TOWER.yTop; },
+    get towerBase(){ return TOWER.base; },
+    setTime(v){ T = v; },
+    // 强制落雷 + 读取闪电几何，供回归断言形态（竖直度/点数/分支数）
+    __forceBolt(){ triggerBolt(); },
+    __boltInfo(){
+      if (!boltPts) return null;
+      let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+      for (const p of boltPts) {
+        if (p[0]<minX) minX=p[0]; if (p[0]>maxX) maxX=p[0];
+        if (p[1]<minY) minY=p[1]; if (p[1]>maxY) maxY=p[1];
+      }
+      return { w: Math.round(maxX-minX), h: Math.round(maxY-minY),
+               n: boltPts.length, branches: branchPts.length };
+    },
+    pixelAt(x,y){ const d = buf[y*VW+x]; return [d&255,(d>>8)&255,(d>>16)&255]; },
+    // 供验证：统计非黑像素与色彩分布
+    stats(){
+      let lumSum=0, minL=255, maxL=0, warmPx=0, coolPx=0;
+      for(let i=0;i<N;i++){
+        const d=buf[i], r=d&255, g=(d>>8)&255, b=(d>>16)&255;
+        const l=r*0.299+g*0.587+b*0.114;
+        lumSum+=l; if(l<minL)minL=l; if(l>maxL)maxL=l;
+        if(r>b+18) warmPx++; else if(b>r+10) coolPx++;
+      }
+      return { avgLum:+(lumSum/N).toFixed(2), minLum:+minL.toFixed(0),
+               maxLum:+maxL.toFixed(0), warmPx, coolPx };
+    },
+    // 供验证：NaN / 越界扫描
+    audit(){
+      const bad=[];
+      if (!isFinite(T)) bad.push('T='+T);
+      if (!isFinite(flash)) bad.push('flash='+flash);
+      // 光束角度是 T 的纯函数，若 NaN 说明时间或几何出了问题
+      const ang = (T / BEAM_PERIOD) * Math.PI * 2;
+      if (!isFinite(ang)) bad.push('beamAngle='+ang);
+      for (const p of spray){
+        if(!isFinite(p.x)||!isFinite(p.y)||!isFinite(p.vx)||!isFinite(p.vy))
+          { bad.push('spray NaN: '+JSON.stringify(p)); break; }
+      }
+      return bad;
+    },
+  };
+
+  requestAnimationFrame(frame);
+}
+
+if (document.readyState === 'loading')
+  document.addEventListener('DOMContentLoaded', init);
+else init();
+</script>
+</body>
+</html>

@@ -91,6 +91,43 @@ const siteData = {
       }
     },
 
+    // --- 互动作品（可交互的实时渲染，点卡片进独立页） ---
+    interactive: {
+      title: '互 动',
+      titleEn: 'Interactive',
+      items: [
+        {
+          index: '壹',
+          seal: '燈',
+          name: '灯塔 · 风暴',
+          desc: '纯代码生成的像素动画：软件逐像素渲染 + Bayer 有序抖动，红白灯塔在冷风暴里扫出光束。',
+          bgImage: 'art-lighthouse.jpg',
+          url: 'lighthouse-storm.html',
+          meta: [
+            { text: '可交互', status: true },
+            { text: 'Canvas · 像素艺术', status: false }
+          ],
+          detail: `
+            <p>一个<strong>会动的像素画</strong>：整幅画面没有一个图片素材，全部由代码逐像素画出来，在480×270 的内部缓冲里渲染，再用整数倍最近邻放大铺满屏幕。</p>
+            <h4>像素质感从哪来</h4>
+            <p>Bayer 4×4 <strong>有序抖动</strong>。渐变本身只有 9 级色阶，靠抖动矩阵在相邻两色之间做空间混搭，于是得到远多于实际色数的层次——这是像素质感的根基，不是滤镜。</p>
+            <h4>画了什么</h4>
+            <ul>
+              <li><strong>风暴云</strong>：团块状密度场累积，每朵云由多个椭圆叠出蓬松体积，边缘用噪声打碎；</li>
+              <li><strong>旋转光束</strong>：绕垂直轴转一圈，投影到屏幕做透视缩短，三段式（核心亮线 + 体积光锥 + 远端衰减）；</li>
+              <li><strong>闪电</strong>：主干强制细长竖直（横向跨度 ≤26px）+ 分支 + 多脉冲频闪，不是劈一次就完；</li>
+              <li><strong>冷暖对比</strong>：全场冷蓝，唯一暖色是灯室与塔窗—— 风暴越冷，那点暖光越像锚。</li>
+            </ul>
+            <h4>一个有意思的技术坑</h4>
+            <p>竖屏时如果按常规「铺满裁切」，画面要放大到 7 倍，480宽里只剩 130px 可见，光束和闪电全被裁掉。改法是让<strong>内部缓冲高度自适应</strong>——竖屏补天补海，而不是裁两侧；但高度有性能红线（纯软件渲染，成本随像素量线性涨），超过阈值宁可裁一点海面也不能让帧率掉到卡。</p>
+            <p class="tip-hint">按 <strong>H</strong> 键可隐藏片名，方便录屏。</p>
+            <h4>直接打开</h4>
+            <p><a href="lighthouse-storm.html" target="_blank" rel="noopener">进入灯塔 · 风暴 ↗</a></p>
+          `
+        }
+      ]
+    },
+
     // --- 绘画 ---
     painting: {
       title: '绘 画',

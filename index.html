@@ -1695,27 +1695,9 @@
         `;
       }
 
-      // 2. 绘画分类 + 画廊网格
-      if (w.painting && w.painting.items && w.painting.items.length) {
-        const p = w.painting;
-        html += `
-          <h3 class="works-subhead reveal"><span class="works-subhead-cn">${p.title}</span><span class="works-subhead-en">${p.titleEn}</span></h3>
-          <div class="gallery-grid">
-            ${p.items.map(item => `
-              <div class="gallery-item reveal">
-                <img src="${item.image}" alt="${item.title}">
-                <div class="gallery-overlay">
-                  <span class="gallery-tag">${item.tag}</span>
-                  <h3>${item.title}</h3>
-                  <p>${item.desc}</p>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        `;
-      }
-
       // 工具卡渲染（支持外链：item.url 存在则渲染为 <a> 新窗口打开）
+      // 必须定义在使用它的分区之前 —— 它是 const 箭头函数，
+      // 放在后面会踩 TDZ（Cannot access before initialization）。
       window.__cardDetails = window.__cardDetails || {};
       const toolCardHTML = (item, key) => {
         const isLink = !!(item.url && String(item.url).trim());
@@ -1736,6 +1718,37 @@
         if (isLink) return `<a class="tool-card reveal" href="${item.url}" target="_blank" rel="noopener" style="${style}">${inner}</a>`;
         return `<div class="tool-card reveal" style="${style}">${inner}</div>`;
       };
+
+      // 2. 互动作品分类（卡片形式，可外链到独立页）
+      if (w.interactive && w.interactive.items && w.interactive.items.length) {
+        const it = w.interactive;
+        html += `
+          <h3 class="works-subhead reveal"><span class="works-subhead-cn">${it.title}</span><span class="works-subhead-en">${it.titleEn}</span></h3>
+          <div class="tool-grid">
+            ${it.items.map((item, i) => toolCardHTML(item, 'i' + i)).join('')}
+          </div>
+        `;
+      }
+
+      // 3. 绘画分类 + 画廊网格
+      if (w.painting && w.painting.items && w.painting.items.length) {
+        const p = w.painting;
+        html += `
+          <h3 class="works-subhead reveal"><span class="works-subhead-cn">${p.title}</span><span class="works-subhead-en">${p.titleEn}</span></h3>
+          <div class="gallery-grid">
+            ${p.items.map(item => `
+              <div class="gallery-item reveal">
+                <img src="${item.image}" alt="${item.title}">
+                <div class="gallery-overlay">
+                  <span class="gallery-tag">${item.tag}</span>
+                  <h3>${item.title}</h3>
+                  <p>${item.desc}</p>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
 
       // 3. 写作分类（卡片形式）
       if (w.writing && w.writing.items && w.writing.items.length) {

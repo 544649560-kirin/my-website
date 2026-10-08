@@ -219,7 +219,7 @@ const siteData = {
           name: '科普 · 诺贝尔物理学奖',
           desc: '2026 物理诺奖：哈尔岑用一立方千米南极冰造出中微子望远镜，给人类观察宇宙多添了一类"不拐弯的信使"。',
           bgImage: 'art-lighthouse.jpg',
-          url: 'nobel-physics-2026.html',
+          url: 'https://mp.weixin.qq.com/s/Hj5gvUI23uRi-fKFX7r_XQ',
           meta: [
             { text: '科普', status: true },
             { text: '中微子 · 冰立方', status: false }
@@ -231,7 +231,7 @@ const siteData = {
           name: '科普 · 诺贝尔化学奖',
           desc: '2026 化学诺奖：卡甘与硖合让分子只生成一种镜像，从手性偏差到生命起源之谜都有落点。',
           bgImage: 'art-chrysanthemum.jpg',
-          url: 'nobel-chem-2026.html',
+          url: 'https://mp.weixin.qq.com/s/UTK2n2lGXQwwraDDiu5qVQ',
           meta: [
             { text: '科普', status: true },
             { text: '手性 · 不对称合成', status: false }

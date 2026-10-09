@@ -243,7 +243,7 @@ const siteData = {
           name: '科普 · 诺贝尔文学奖',
           desc: '2026 文学诺奖：安妮·卡森把古希腊神话与诗歌改写成当代诗与散文，成为诺奖史上第19位女性得主。',
           bgImage: 'art-landscape.jpg',
-          url: 'nobel-lit-2026.html',
+          url: 'https://mp.weixin.qq.com/s/kmInJFVu-zQAPCEapxBR6A',
           meta: [
             { text: '科普', status: true },
             { text: '安妮·卡森', status: false }
